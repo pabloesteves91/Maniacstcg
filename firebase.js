@@ -8,11 +8,13 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 
 // === Firebase Config (ersetzen) ===
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAOHpWMsHOk5Ls67WlljqK_h0vsgmi0jgg",
+  authDomain: "maniacstcg-bbc37.firebaseapp.com",
+  projectId: "maniacstcg-bbc37",
+  storageBucket: "maniacstcg-bbc37.appspot.com",
+  messagingSenderId: "762124601481",
+  appId: "1:762124601481:web:fc6eeb6bea98971d6d1e58",
+  measurementId: "G-L50D657EYP"
 };
 
 export const app = initializeApp(firebaseConfig);
