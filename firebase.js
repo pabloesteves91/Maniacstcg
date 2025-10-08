@@ -1,0 +1,36 @@
+// Firebase v9 Modular SDK
+// 1) Console: Projekt anlegen, Auth (E-Mail/Passwort) aktivieren, Firestore aktivieren
+// 2) Hier DEINE Config eintragen
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, setDoc, doc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js";
+
+// === Firebase Config (ersetzen) ===
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  appId: "YOUR_APP_ID"
+};
+
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+// Falls du in EU deployst (europe-west1), kannst du Region setzen:
+// export const fns = getFunctions(app, "europe-west1");
+export const fns = getFunctions(app);
+
+export async function loginEmail(email, pass){ return signInWithEmailAndPassword(auth, email, pass); }
+export async function logout(){ return signOut(auth); }
+export function onUser(cb){ return onAuthStateChanged(auth, cb); }
+
+// Cloud Functions (Admin)
+export const cfCreateUser = httpsCallable(fns, 'createManiacUser');
+export const cfSetUserRole = httpsCallable(fns, 'setManiacRole');
+
+// Firestore Helpers
+export const col = (name)=>collection(db, name);
+export const docRef = (name, id)=>doc(db, name, id);
+export { addDoc, getDocs, setDoc, onSnapshot, query, orderBy, deleteDoc };
