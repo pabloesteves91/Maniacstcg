@@ -505,3 +505,9 @@ dialog{
 @media (min-width:1100px){
   #rotate-tip{ display: none !important; }
 }
+
+/* Admin-Elemente standardmäßig ausblenden */
+.admin-only { display: none; }
+
+/* Sobald Admin erkannt -> sichtbar (inline-flex passt zu Buttons, kann auch inline-block sein) */
+.is-admin .admin-only { display: inline-flex; }
