@@ -82,35 +82,68 @@
     </section>
 
     <!-- MATCHES -->
-    <section id="view-matches" class="view">
-      <div class="grid-2">
-        <div class="card" id="matches-form-card">
-          <h3>Match eintragen</h3>
-          <form id="match-form" class="form-grid">
-            <input type="date" id="m-date" />
-            <select id="m-player"></select>
-            <input type="text" id="m-deck" placeholder="Deck" />
-            <input type="text" id="m-opp" placeholder="Gegner" />
-            <select id="m-res">
-              <option value="W">Win</option><option value="L">Loss</option><option value="D">Draw</option>
-            </select>
-            <input type="text" id="m-event" placeholder="Event" />
-            <button type="submit" class="btn">Speichern</button>
-          </form>
-        </div>
+<section id="view-matches" class="view">
+  <div class="grid-2">
 
-        <div class="card" id="matches-list-card">
-          <div class="row between center wrap">
-            <h3>Alle Matches</h3>
-            <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
-          </div>
-          <table id="matches-table">
-            <thead><tr><th>Date</th><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th><th>Event</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+    <!-- Formular zum Match-Eintragen -->
+    <div class="card" id="matches-form-card">
+      <h3>Match eintragen</h3>
+      <form id="match-form" class="form-grid">
+        <input type="date" id="m-date" />
+
+        <select id="m-player"></select>
+
+        <input type="text" id="m-deck" placeholder="Deck" />
+        <input type="text" id="m-opp" placeholder="Gegner" />
+
+        <!-- Match-Ergebnis -->
+        <select id="m-res">
+          <option value="W">Win</option>
+          <option value="L">Loss</option>
+          <option value="D">Draw</option>
+        </select>
+
+        <!-- Event-Level -->
+        <select id="m-tier">
+          <option value="L">Local</option>
+          <option value="R">Regional</option>
+          <option value="I">International</option>
+          <option value="C">Challenge</option>
+          <option value="S">Special</option>
+          <option value="W">Worlds</option>
+        </select>
+
+        <!-- Freitext-Kommentar zum Event -->
+        <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" />
+
+        <button type="submit" class="btn">Speichern</button>
+      </form>
+    </div>
+
+    <!-- Match-Liste -->
+    <div class="card" id="matches-list-card">
+      <div class="row between center wrap">
+        <h3>Alle Matches</h3>
+        <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
       </div>
-    </section>
+      <table id="matches-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Player</th>
+            <th>Deck</th>
+            <th>Opponent</th>
+            <th>Result</th>
+            <th>Event</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
 
     <!-- EVENTS -->
     <section id="view-events" class="view">
