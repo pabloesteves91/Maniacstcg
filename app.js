@@ -180,14 +180,40 @@ async function recomputePlayerStats(playerId){
     if(m.deck) decksSet.add(String(m.deck).trim());
   });
 
-  // Player-Dokument finden und aktualisieren
-  const allPlayers = await getDocs(query(col(C_PLAYERS)));
-  allPlayers.forEach(async d=>{
-    if(d.id===playerId){
-      const p = d.data();
-      await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
-    }
-  });
+// Player-Dokument finden und aktualisieren
+const allPlayers = await getDocs(query(col(C_PLAYERS)));
+for (const d of allPlayers.docs) {
+  if (d.id === playerId) {
+    const p = d.data();
+    await setDoc(docRef(C_PLAYERS, playerId), {
+      ...p,
+      wins,
+      losses,
+      draws,
+      decks: [...decksSet],
+    });
+  }
+}
+
+// 🔄 danach sofort UI neu laden, damit die Änderung sichtbar ist
+const updatedPlayers = await getDocs(query(col(C_PLAYERS), orderBy('name')));
+const rows = [];
+updatedPlayers.forEach(doc=>{
+  const p = {id: doc.id, ...doc.data()};
+  const g = (p.wins||0)+(p.losses||0)+(p.draws||0);
+  const pct = g ? Math.round((p.wins||0)/g*100) : 0;
+  rows.push(`
+    <tr>
+      <td>${p.name}</td>
+      <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
+      <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
+      <td>${(p.decks||[]).join(', ')}</td>
+      <td>${p.top8||0}</td>
+      <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
+    </tr>
+  `);
+});
+$('#players-table tbody').innerHTML = rows.join('');
 }
 
 $('#match-form').addEventListener('submit', async (e)=>{
