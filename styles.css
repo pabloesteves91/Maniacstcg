@@ -217,39 +217,46 @@ dialog{
   letter-spacing:.5px;
 }
 .kpi-row {
-  display:flex;
-  justify-content:center;
-  align-items:stretch; /* alle gleich hoch */
-  flex-wrap:wrap;
-  gap:24px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch; /* alle gleich hoch */
+  flex-wrap: wrap;
+  gap: 24px;
 }
-.kpi-box {
-  background:rgba(255,255,255,.05);
-  border-radius:16px;
-  padding:20px 30px;
-  min-width:150px;
 
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  min-height:120px; /* gleiche Höhe */
+.kpi-box {
+  background: rgba(255,255,255,.05);
+  border-radius: 16px;
+  padding: 20px 30px;
+  min-width: 150px;
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 120px; /* gleiche Höhe für alle */
 }
+
 .kpi-label {
-  color:var(--muted);
-  font-size:15px;
-  margin-bottom:6px;
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 6px;
 }
+
 .kpi-value {
-  font-size:36px;
-  font-weight:800;
-  color:var(--brand);
-  letter-spacing:1px;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--brand);
+  letter-spacing: 1px;
 }
+
+/* Streak Leader gleich groß wie andere, nur rot */
 .kpi-box .kpi-value.streak {
-  color:#e33;
-  font-size:inherit; /* gleiche Größe */
+  color: #e33;
+  font-size: 36px; /* exakt gleiche Höhe/Größe */
+}
 }
 @media (max-width:700px){
   .kpi-row{ gap:16px; }
