@@ -608,3 +608,17 @@ dialog{
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* Overlay-Button kompakt */
+#rotate-tip .btn.ghost {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid rgba(255,255,255,.22);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+#rotate-tip .btn.ghost:hover{
+  background: rgba(255,255,255,.08);
+}
