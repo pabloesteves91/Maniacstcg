@@ -93,14 +93,14 @@
 
     <!-- Formular zum Match-Eintragen -->
     <div class="card" id="matches-form-card">
-      <h3>Match eintragen</h3>
+      <h3>Enter Match</h3>
       <form id="match-form" class="form-grid">
         <input type="date" id="m-date" />
 
         <select id="m-player"></select>
 
         <input type="text" id="m-deck" placeholder="Deck" />
-        <input type="text" id="m-opp" placeholder="Gegner" />
+        <input type="text" id="m-opp" placeholder="Opponent" />
 
         <!-- Match-Ergebnis -->
         <select id="m-res">
@@ -122,14 +122,14 @@
         <!-- Freitext-Kommentar zum Event -->
         <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" />
 
-        <button type="submit" class="btn">Speichern</button>
+        <button type="submit" class="btn">Save</button>
       </form>
     </div>
 
     <!-- Match-Liste -->
     <div class="card" id="matches-list-card">
       <div class="row between center wrap">
-        <h3>Alle Matches</h3>
+        <h3>All Matches</h3>
         <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
       </div>
       <table id="matches-table">
@@ -155,13 +155,13 @@
     <section id="view-events" class="view">
       <div class="grid-2">
         <div class="card" id="events-form-card">
-          <h3>Event hinzufügen</h3>
+          <h3>Enter Event</h3>
           <form id="event-form" class="form-grid">
             <input type="text" id="ev-name" placeholder="Event-Name" required />
             <input type="date" id="ev-date" required />
-            <input type="text" id="ev-loc" placeholder="Ort" required />
+            <input type="text" id="ev-loc" placeholder="Location" required />
             <input type="text" id="ev-type" placeholder="Typ" />
-            <button type="submit" class="btn">Speichern</button>
+            <button type="submit" class="btn">Save</button>
           </form>
         </div>
 
@@ -182,17 +182,17 @@
     <section id="view-sponsors" class="view">
       <div class="grid-2">
         <div class="card" id="sponsor-form-card">
-          <h3>Sponsor hinzufügen</h3>
+          <h3>Enter Sponsor</h3>
           <form id="sponsor-form" class="form-grid">
             <input type="text" id="sp-name" placeholder="Sponsor" required />
             <input type="url" id="sp-url" placeholder="https://…" />
-            <button type="submit" class="btn">Speichern</button>
+            <button type="submit" class="btn">Save</button>
           </form>
         </div>
 
         <div class="card" id="sponsor-list-card">
           <div class="row between center wrap">
-            <h3>Aktive Sponsoren</h3>
+            <h3>Active Sponsors</h3>
             <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
           </div>
           <ul id="sponsor-list" class="list"></ul>
@@ -203,19 +203,19 @@
 
   <dialog id="player-modal">
     <form id="player-form" method="dialog" class="modal">
-      <h3>Neuer Player</h3>
+      <h3>new Player</h3>
       <input id="p-name" type="text" placeholder="Name" required />
       <input id="p-decks" type="text" placeholder="Decks (kommagetrennt)" />
       <div class="row end gap-8">
-        <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button class="btn" type="submit">Speichern</button>
+        <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
+        <button class="btn" type="submit">Save</button>
       </div>
     </form>
   </dialog>
 
 <footer class="footer">
   <div class="container row between center wrap" style="padding:16px 0;">
-    <div class="muted">© MANIACS · TCG</div>
+    <div class="muted">© TEAM MANIACS · TCG</div>
     <div class="social-buttons row" style="gap:12px">
       <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" aria-label="Instagram">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
