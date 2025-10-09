@@ -74,17 +74,21 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  function applyAdminUI(isAdmin){
-    isAdminUI = isAdmin;
-    // Admin-spezifische UI
-    $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
-    $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
-    $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+function applyAdminUI(isAdmin){
+  isAdminUI = isAdmin;
 
-    // 👑 Badge
-    const badge = document.getElementById('role-badge');
-    if (badge) badge.classList.toggle('hidden', !isAdmin);
-  }
+  // Sichtbarkeit für Admin-Only Bereiche wie bisher:
+  $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
+  $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
+  $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+
+  // 👑 Badge
+  const badge = document.getElementById('role-badge');
+  if (badge) badge.classList.toggle('hidden', !isAdmin);
+
+  // NEU: Body-Flag, damit CSS admin-only Elemente ein-/ausblenden kann
+  document.body.classList.toggle('is-admin', isAdmin);
+}
 
   /* ------------------ Auth ------------------ */
   $('#login-form')?.addEventListener('submit', async (e)=>{
@@ -193,7 +197,7 @@ if (window.__MANIACS_INIT__) {
           <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
           <td>${(p.decks||[]).join(', ')}</td>
           <td>${p.top8||0}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
+          <td><button class="btn ghost admin-only" data-del-p="${p.id}">Löschen</button></td>
         </tr>`
       );
       opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
@@ -296,7 +300,7 @@ if (window.__MANIACS_INIT__) {
           <td>${m.opp||''}</td>
           <td>${m.res||''}</td>
           <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>` : ''}</td>
+          <td><button class="btn ghost admin-only" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button></td>
         </tr>
       `);
 
@@ -383,7 +387,7 @@ if (window.__MANIACS_INIT__) {
           <td>${e.name||''}</td>
           <td>${e.loc||''}</td>
           <td>${e.type||''}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
+          <td><button class="btn ghost admin-only" data-del-event="${d.id}">Löschen</button></td>
         </tr>
       `);
     });
@@ -417,7 +421,7 @@ if (window.__MANIACS_INIT__) {
           <strong>${s.name}</strong>
           <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
           <span class="grow"></span>
-          ${isAdminUI ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
+          <button class="btn ghost admin-only" data-del-s="${s.id}">Entfernen</button>
         </li>
       `);
     });
