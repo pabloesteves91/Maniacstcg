@@ -1,9 +1,9 @@
-// MANIACS · COMPETE — app.js (final hardened: init-guard + submit-debounce)
+// MANIACS · COMPETE — app.js (final, admin via rules-probe, init-guard, debounce)
 
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
-  query, orderBy, deleteDoc
+  query, orderBy, deleteDoc, getDoc
 } from './firebase.js';
 
 // ===== Global Init Guard (verhindert doppelte Initialisierung) =====
@@ -12,7 +12,7 @@ if (window.__MANIACS_INIT__) {
 } else {
   window.__MANIACS_INIT__ = true;
 
-  // ------------------ Helpers ------------------
+  /* ------------------ Helpers ------------------ */
   const $  = (s)=>document.querySelector(s);
   const $$ = (s)=>[...document.querySelectorAll(s)];
   function setActiveTab(id){
@@ -21,9 +21,7 @@ if (window.__MANIACS_INIT__) {
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
-  const OWNER_EMAIL = "fabioberta@me.com";
-
-  // ---------- CSV helpers ----------
+  // CSV helpers
   function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
   function toCSV(rows, order){
     const bom='\uFEFF';
@@ -39,23 +37,46 @@ if (window.__MANIACS_INIT__) {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
-  // ------------------ Auth ------------------
-  $('#login-form').addEventListener('submit', async (e)=>{
+  /* ------------------ Admin via Rules-Probe ------------------ */
+  let currentUser = null;
+  let isAdminUI = false;
+
+  async function checkAdminViaRulesProbe(user){
+    if (!user) return false;
+    try {
+      // Laut Rules dürfen nur Admins /meta/adminProbe lesen.
+      await getDoc(docRef('meta', 'adminProbe'));
+      return true; // Read erlaubt => Admin
+    } catch (err) {
+      // permission-denied => kein Admin
+      return false;
+    }
+  }
+
+  function applyAdminUI(isAdmin){
+    isAdminUI = isAdmin;
+    // Admin-spezifische UI
+    $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
+    $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
+    $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+  }
+
+  /* ------------------ Auth ------------------ */
+  $('#login-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email=$('#login-email').value.trim(); const pass=$('#login-pass').value;
     try{ await loginEmail(email,pass); $('#login-pass').value=''; }
     catch(err){ alert('Login fehlgeschlagen: '+(err.message||err)); }
   });
-  $('#btn-logout').addEventListener('click', logout);
+  $('#btn-logout')?.addEventListener('click', logout);
 
-  let currentUser=null;
   onUser(async (user)=>{
     currentUser = user || null;
 
     // Header UI
     $('#user-info').textContent = user ? user.email : '';
-    $('#btn-logout').classList.toggle('hidden', !user);
-    $('#login-form').classList.toggle('hidden', !!user);
+    $('#btn-logout')?.classList.toggle('hidden', !user);
+    $('#login-form')?.classList.toggle('hidden', !!user);
 
     // Read-only Layout: linke Karten verstecken, rechte Karte mittig
     const isLoggedIn = !!user;
@@ -69,33 +90,32 @@ if (window.__MANIACS_INIT__) {
     $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
-    // Owner-Bereiche
-    const isOwner = !!(user && user.email===OWNER_EMAIL);
-    $('#sponsor-form')?.classList.toggle('hidden', !isOwner);
-    $('#sponsor-form-card')?.classList.toggle('hidden', !isOwner);
-    $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
+    // Admin nur über Rules bestimmen
+    const admin = await checkAdminViaRulesProbe(user);
+    applyAdminUI(admin);
   });
 
-  // ------------------ Collections ------------------
+  /* ------------------ Collections ------------------ */
   const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
-  // ------------------ Player Modal (wie am Anfang) ------------------
+  /* ------------------ Player Modal ------------------ */
   const playerModal = $('#player-modal');
   function openPlayerModal(){
     if(!currentUser) return alert('Bitte zuerst einloggen.');
+    if(!isAdminUI)   return alert('Nur Admins dürfen Players anlegen.');
     try{ playerModal.showModal(); }
-    catch{ playerModal.setAttribute('open',''); } // Fallback
+    catch{ playerModal.setAttribute('open',''); }
   }
   $('#btn-open-player')?.addEventListener('click', openPlayerModal);
 
   // Submit-Debounce Flags
   const submitting = { player:false, match:false };
 
-  $('#player-form').addEventListener('submit', async (e)=>{
+  $('#player-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    if(submitting.player) return;          // Debounce
+    if(submitting.player) return;
     if(!currentUser) return alert('Login erforderlich.');
-    if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players speichern.');
+    if(!isAdminUI)   return alert('Nur Admins dürfen Players speichern.');
 
     const btn = e.submitter || $('#player-form button[type="submit"]');
     try{
@@ -115,17 +135,27 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  // ------------------ Team Stats Targets (text) ------------------
+  /* ------------------ Team Summary (Text) ------------------ */
   const teamSummaryEl = document.getElementById('team-summary');   // UL
   const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
-  // ------------------ Players ------------------
-  let _playersCache=[]; let _deckCounts={};
+  /* ------------------ Players ------------------ */
   const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
+
+  function attachPlayerDeleteButtons(){
+    $$('[data-del-p]').forEach(b=>{
+      b.onclick = async ()=>{
+        if(!currentUser) return alert('Login erforderlich.');
+        if(!isAdminUI)   return alert('Nur Admins dürfen löschen.');
+        if(!confirm('Diesen Player wirklich löschen?')) return;
+        try { await deleteDoc(docRef(C_PLAYERS, b.dataset.delP)); }
+        catch(err){ alert('Fehler beim Löschen: '+(err.message||err)); }
+      };
+    });
+  }
 
   onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
     const rows=[], opts=[]; let tw=0, t8=0;
-    _playersCache=[]; _deckCounts={};
     snap.forEach(d=>{
       const p={id:d.id, ...d.data()};
       const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
@@ -137,13 +167,11 @@ if (window.__MANIACS_INIT__) {
           <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
           <td>${(p.decks||[]).join(', ')}</td>
           <td>${p.top8||0}</td>
-          <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
         </tr>`
       );
       opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
       tw+=(p.wins||0); t8+=(p.top8||0);
-      _playersCache.push(p);
-      (p.decks||[]).forEach(n=>{ if(!n) return; const k=n.trim(); _deckCounts[k]=(_deckCounts[k]||0)+1; });
     });
     playersTBody.innerHTML = rows.join('');
     mPlayerSelect.innerHTML = opts.join('');
@@ -151,7 +179,7 @@ if (window.__MANIACS_INIT__) {
     $('#kpi-wins').textContent = tw;
     $('#kpi-top8').textContent = t8;
 
-    // Team-Top8 in Summary synchronisieren
+    // Team-Top8 Summary
     if (teamSummaryEl) {
       const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
       const li = existing || document.createElement('li');
@@ -160,14 +188,10 @@ if (window.__MANIACS_INIT__) {
       if (!existing) teamSummaryEl.appendChild(li);
     }
 
-    $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
-      if(!currentUser) return;
-      if(currentUser.email !== OWNER_EMAIL) return;
-      await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
-    }));
+    attachPlayerDeleteButtons();
   });
 
-  // ------------------ Matches ------------------
+  /* ------------------ Matches ------------------ */
   function tierToText(code){
     switch(code){
       case 'L': return 'Local';
@@ -180,27 +204,19 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  /** Recompute: berechnet W/L/D + Decks für einen Player aus *allen* Matches */
+  // Player-Stats aus allen Matches neu berechnen
   async function recomputePlayerStats(playerId){
     if(!playerId) return;
-
-    // Alle Matches laden und clientseitig filtern (ohne where)
     const allMatchesSnap = await getDocs(query(col(C_MATCHES), orderBy('date','desc')));
-    let wins=0, losses=0, draws=0;
-    const decksSet = new Set();
-
+    let wins=0, losses=0, draws=0; const decksSet = new Set();
     allMatchesSnap.forEach(doc=>{
       const m = doc.data();
       if (m.playerId !== playerId) return;
-      if(m.res==='W') wins++;
-      else if(m.res==='L') losses++;
-      else if(m.res==='D') draws++;
+      if(m.res==='W') wins++; else if(m.res==='L') losses++; else if(m.res==='D') draws++;
       if(m.deck) decksSet.add(String(m.deck).trim());
     });
-
-    // Player-Dokument finden und aktualisieren
-    const allPlayers = await getDocs(query(col(C_PLAYERS)));
-    for (const d of allPlayers.docs) {
+    const playersSnap = await getDocs(query(col(C_PLAYERS)));
+    for (const d of playersSnap.docs) {
       if (d.id === playerId) {
         const p = d.data();
         await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
@@ -208,9 +224,9 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  $('#match-form').addEventListener('submit', async (e)=>{
+  $('#match-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    if(submitting.match) return;        // Debounce
+    if(submitting.match) return;
     if(!currentUser) return alert('Login erforderlich.');
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
@@ -228,9 +244,8 @@ if (window.__MANIACS_INIT__) {
     try{
       submitting.match = true;
       btn?.setAttribute('disabled','disabled');
-
       await addDoc(col(C_MATCHES), m);
-      if (playerId) await recomputePlayerStats(playerId);  // nach Add neu berechnen
+      if (playerId) await recomputePlayerStats(playerId);
       e.target.reset();
     } finally {
       submitting.match = false;
@@ -242,13 +257,11 @@ if (window.__MANIACS_INIT__) {
 
   onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
     const rows=[], latest=[];
-    // --- Aggregate für Team-Stats ---
     let teamW = 0, teamL = 0, teamD = 0;
     const deckWinCounts = {}; // deck -> wins
 
     snap.forEach(d=>{
       const m=d.data();
-
       rows.push(`
         <tr>
           <td>${m.date||''}</td>
@@ -257,17 +270,12 @@ if (window.__MANIACS_INIT__) {
           <td>${m.opp||''}</td>
           <td>${m.res||''}</td>
           <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
-          <td>${
-            currentUser?.email===OWNER_EMAIL
-              ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>`
-              : ''
-          }</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>` : ''}</td>
         </tr>
       `);
 
       if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
 
-      // Aggregation
       if (m.res === 'W') teamW++;
       else if (m.res === 'L') teamL++;
       else if (m.res === 'D') teamD++;
@@ -281,16 +289,15 @@ if (window.__MANIACS_INIT__) {
     matchesTBody.innerHTML = rows.join('');
     latestTBody.innerHTML  = latest.join('');
 
-    // Delete-Listener mit Recompute
     $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
       if(!currentUser) return;
-      if(currentUser.email !== OWNER_EMAIL) return;
+      if(!isAdminUI)   return;
       const pid = b.dataset.playerId || '';
       await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
-      if (pid) await recomputePlayerStats(pid);  // nach Delete neu berechnen
+      if (pid) await recomputePlayerStats(pid);
     }));
 
-    // --- Team Summary rendern (W/L/D + Top8 aus Players) ---
+    // Team Summary (W/L/D)
     if (teamSummaryEl) {
       const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
       const wlLi = wlExisting || document.createElement('li');
@@ -306,7 +313,7 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-    // --- Top Deck (Wins) rendern ---
+    // Top Deck (Wins)
     if (topDeckEl) {
       topDeckEl.innerHTML = '';
       const decks = Object.keys(deckWinCounts);
@@ -325,8 +332,8 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  // ------------------ Events ------------------
-  $('#event-form').addEventListener('submit', async (e)=>{
+  /* ------------------ Events ------------------ */
+  $('#event-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
     const ev={
@@ -350,7 +357,7 @@ if (window.__MANIACS_INIT__) {
           <td>${e.name||''}</td>
           <td>${e.loc||''}</td>
           <td>${e.type||''}</td>
-          <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
         </tr>
       `);
     });
@@ -358,16 +365,16 @@ if (window.__MANIACS_INIT__) {
 
     $$('[data-del-event]').forEach(b=>b.addEventListener('click', async ()=>{
       if(!currentUser) return;
-      if(currentUser.email !== OWNER_EMAIL) return;
+      if(!isAdminUI)   return;
       await deleteDoc(docRef(C_EVENTS, b.dataset.delEvent));
     }));
   });
 
-  // ------------------ Sponsors ------------------
-  $('#sponsor-form').addEventListener('submit', async (e)=>{
+  /* ------------------ Sponsors ------------------ */
+  $('#sponsor-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
-    if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Sponsoren speichern.');
+    if(!isAdminUI)   return alert('Nur Admins dürfen Sponsoren speichern.');
     const s={ name:$('#sp-name').value.trim(), url:$('#sp-url').value.trim() };
     await addDoc(col(C_SPONS), s);
     e.target.reset();
@@ -384,19 +391,19 @@ if (window.__MANIACS_INIT__) {
           <strong>${s.name}</strong>
           <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
           <span class="grow"></span>
-          ${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
+          ${isAdminUI ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
         </li>
       `);
     });
     sponsList.innerHTML = items.join('');
     $$('[data-del-s]').forEach(b=>b.addEventListener('click', async ()=>{
       if(!currentUser) return;
-      if(currentUser.email !== OWNER_EMAIL) return;
+      if(!isAdminUI)   return;
       await deleteDoc(docRef(C_SPONS, b.dataset.delS));
     }));
   });
 
-  // ------------------ CSV Exports ------------------
+  /* ------------------ CSV Exports ------------------ */
   $('#export-players')?.addEventListener('click', async ()=>{
     const snap=await getDocs(query(col(C_PLAYERS), orderBy('name'))); const rows=[];
     snap.forEach(d=>{
