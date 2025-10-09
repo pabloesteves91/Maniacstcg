@@ -244,33 +244,42 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-// Matches-Form: Player Dropdown (robust für iOS/Safari)
+// Matches-Form: Player Dropdown (robust, iOS/Safari-freundlich)
 if (mPlayerSelect) {
   const prev = mPlayerSelect.value; // vorherige Auswahl merken
 
-  // Platzhalter NICHT mit hidden (Safari-Bug). Nur disabled+selected.
-  let html = '<option value="" disabled selected>– Player wählen –</option>';
+  // Platzhalter NICHT disabled/hidden -> manche Browser blocken dann die Auswahl
+  let html = '<option value="">– Player wählen –</option>';
   docs.forEach(d=>{
     const p = d.data();
     html += `<option value="${d.id}" data-name="${p.name}">${p.name}</option>`;
   });
   mPlayerSelect.innerHTML = html;
 
-  // Enable/Disable korrekt setzen
-  mPlayerSelect.disabled = docs.length === 0;
-
   // Vorherige Auswahl wiederherstellen, falls möglich
   if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
     mPlayerSelect.value = prev;
   } else {
-    mPlayerSelect.selectedIndex = 0; // auf Platzhalter
+    // Wenn es genau 1 Spieler gibt: den direkt auswählen (Quality of life)
+    if (docs.length === 1) {
+      const only = docs[0];
+      mPlayerSelect.value = only.id;
+    } else {
+      mPlayerSelect.value = ""; // Platzhalter aktiv
+    }
   }
 
-  // iOS/Safari: ensure "selectedOptions" & UI sind synchron
-  mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
+  // iOS/Safari: nach DOM-Update einen Tick warten, dann „syncen“
+  setTimeout(()=>{
+    // Fallback: Name aus Option-Text, falls selectedOptions leer liefert
+    const sel = mPlayerSelect.options[mPlayerSelect.selectedIndex];
+    mPlayerSelect.dataset.selectedName = sel ? (sel.dataset.name || sel.textContent || "") : "";
+    mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
+  }, 0);
 
-  // Zusätzliche iOS-Stabilisierung
+  // Sicherstellen, dass das Select „nativ“ rendert
   mPlayerSelect.style.webkitAppearance = 'menulist-button';
+  mPlayerSelect.style.appearance = 'menulist';
 }
   }
 
@@ -493,14 +502,16 @@ if (mPlayerSelect) {
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
     const sel = $('#m-player');
-    const opt = sel?.selectedOptions?.[0];
-    const playerId   = opt?.value || '';
-    const playerName = opt?.dataset?.name || '';
+    const opt = $('#m-player')?.options[$('#m-player')?.selectedIndex || 0];
+const playerId   = opt?.value || "";
+const playerName = (opt?.dataset?.name || opt?.textContent || "").trim();
 
-    if (!playerId) {
-      alert('Bitte zuerst einen Player wählen.');
-      return;
-    }
+// Pflicht: Player muss gewählt sein
+if (!playerId) {
+  alert('Bitte zuerst einen Player wählen.');
+  $('#m-player')?.focus();
+  return;
+}
 
     const m={
       date: $('#m-date').value || new Date().toISOString().slice(0,10),
