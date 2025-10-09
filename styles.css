@@ -1,292 +1,187 @@
-/* ============================
-   MANIACS · COMPETE — styles.css
-   Dark sporty UI, red/white accent
-   ============================ */
-
 :root{
-  --mx-bg:#0f1115;
-  --mx-card:#161922;
-  --mx-card-2:#1b1f2a;
-  --mx-text:#eef1f6;
-  --mx-muted:#9aa3b2;
-  --mx-red:#E30613;        /* MANIACS Rot */
-  --mx-border:#252a36;
-  --mx-ok:#00c853;
-  --mx-warn:#ffb300;
-  --mx-bad:#ff5252;
+  --bg:#0f1420;
+  --card:#151a25;
+  --muted:#9aa3b2;
+  --txt:#fff;
+  --brand:#E30613;           /* MANIACS Rot */
+  --hover-accent:#a287f4;    /* sanftes Lila für Icon-Hover */
+  --line:rgba(255,255,255,.08);
+  --line-soft:rgba(255,255,255,.06);
 }
 
-*{box-sizing:border-box}
+*{ box-sizing:border-box }
+
 html,body{
-  margin:0; padding:0;
-  background:var(--mx-bg); color:var(--mx-text);
-  font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  margin:0;
+  background:var(--bg);
+  color:var(--txt);
+  font:15px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  max-width:100%;
+  overflow-x:hidden; /* keine horizontale Scrollleiste */
 }
 
-.container{max-width:1100px;margin:0 auto;padding:16px;}
-.row{display:flex;gap:12px}
-.col{display:flex;flex-direction:column;gap:12px}
-.wrap{flex-wrap:wrap}
-.center{align-items:center}
-.end{justify-content:flex-end}
-.between{justify-content:space-between}
-.gap-8{gap:8px}
-.gap-12{gap:12px}
-.right{justify-content:flex-end}
+a{ color:inherit; text-decoration:none; }
 
-h1,h2,h3{margin:0 0 8px}
-h1{font-size:24px;font-weight:800;letter-spacing:.5px}
-h3{font-weight:700}
-.muted{color:var(--mx-muted)}
+.container{ max-width:1200px; margin:0 auto; padding:18px; }
 
-.btn{
-  background:var(--mx-red); border:none; color:white;
-  padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700
-}
-.btn:hover{filter:brightness(1.08)}
-.btn.ghost{background:transparent;border:1px solid var(--mx-border);color:var(--mx-text)}
-.hidden{display:none !important}
+.row{ display:flex; gap:10px; }
+.row.between{ justify-content:space-between; }
+.row.center{ align-items:center; }
+.row.end{ justify-content:flex-end; }
+.row.wrap{ flex-wrap:wrap; }
+.grow{ flex:1; }
 
-input,select{
-  background:#0b0d12; border:1px solid var(--mx-border); color:var(--mx-text);
-  padding:10px; border-radius:10px; outline:none; min-height:40px
-}
-label{display:flex;flex-direction:column;gap:6px}
-
-.app-header{
-  background:linear-gradient(180deg,#121521 0%, #0e1119 100%);
-  border-bottom:1px solid var(--mx-border)
+header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:linear-gradient(180deg, rgba(15,20,32,.98), rgba(15,20,32,.88) 60%, transparent);
 }
 
-/* Bigger white logo */
-.logo img{
-  height:64px; width:auto; display:block;
-  filter:drop-shadow(0 0 6px rgba(227,6,19,.35));
-}
+.brand img{ height:52px; display:block; }
 
-.tabs{display:flex;gap:8px;padding:0 16px 12px 16px}
-.tab{
-  background:transparent;border:1px solid var(--mx-border);
-  color:var(--mx-text); padding:10px 12px; border-radius:999px; cursor:pointer
-}
-.tab.active{background:var(--mx-red);border-color:transparent}
-
-.view{display:none}
-.view.active{display:block}
+h1,h2,h3,h4{ margin:0; }
 
 .card{
-  background:var(--mx-card); border:1px solid var(--mx-border);
-  border-radius:16px; padding:16px; margin:12px 0;
-  box-shadow:0 6px 30px rgba(0,0,0,.25)
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:18px;
 }
-.card h3{margin-bottom:8px}
+.card h3{ margin:0 0 10px; }
 
-/* KPI tiles */
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.kpi .box{background:var(--mx-card-2);border:1px solid var(--mx-border);border-radius:14px;padding:12px}
-.kpi .label{color:var(--mx-muted);font-size:12px}
-.kpi .val{font-size:28px;font-weight:800}
-
-/* Layout grids */
-.grid-2{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-grid input,.form-grid select{width:100%}
-.form-grid button{grid-column:1/-1}
-
-/* Tables */
-table{
-  width:100%; border-collapse:separate; border-spacing:0;
-  overflow:hidden; border-radius:12px; border:1px solid var(--mx-border)
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
 }
-th,td{padding:10px 12px;border-bottom:1px solid var(--mx-border);text-align:left}
-thead th{background:#121623}
-tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
+.mx-center{ margin-left:auto; margin-right:auto; }
 
-/* Pills */
-.pill{padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px}
-.pill.ok{background:rgba(0,200,83,.15);color:var(--mx-ok)}
-.pill.warn{background:rgba(255,179,0,.15);color:var(--mx-warn)}
-.pill.bad{background:rgba(255,82,82,.15);color:var(--mx-bad)}
-
-/* Lists */
-.list{list-style:none;padding:0;margin:0}
-.list li{
-  display:flex;gap:10px;align-items:center;
-  padding:10px 0;border-bottom:1px solid var(--mx-border)
+/* Formulare */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
 }
-.list a{color:var(--mx-muted);text-decoration:none}
-.grow{flex:1}
-
-/* Dialog / Modal */
-.modal{
-  background:var(--mx-card); border:1px solid var(--mx-border);
-  border-radius:14px; padding:16px; color:var(--mx-text); min-width:280px
+input,select,button{
+  background:#0d111a;
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--txt);
+  border-radius:10px;
+  padding:10px 12px;
+  min-height:44px;
+  font-size:16px;
 }
-dialog::backdrop{background:rgba(0,0,0,.55)}
+input::placeholder{ color:#778; }
 
-/* Footer */
-.footer{border-top:1px solid var(--mx-border);margin-top:24px}
-.footer .cta a{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 14px;border-radius:999px;border:1px solid var(--mx-border);
-  text-decoration:none;color:var(--mx-text)
+.btn{
+  background:var(--brand);
+  border:none;
+  font-weight:700;
+  cursor:pointer;
 }
-.footer .cta a:hover{border-color:var(--mx-red)}
-
-/* Read-only layout: hide left forms, center right card */
-.mx-center{max-width:860px;margin:0 auto}
-.readonly .grid-2{grid-template-columns:1fr}
-
-/* Small helpers */
-#user-info{min-width:160px;text-align:right}
-
-.muted {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.9em;
+.btn.ghost{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.22);
 }
+.btn.icon{ display:inline-flex; gap:8px; align-items:center; }
+.hidden{ display:none !important; }
 
-#team-stats-card h4 { margin: 0 0 6px; }
-#team-summary li, #top-deck-list li { padding: 8px 0; }
+/* Tabellen */
+table{ width:100%; border-collapse:separate; border-spacing:0; }
+thead th{
+  font-weight:600;
+  color:var(--muted);
+  text-align:left;
+  padding:8px 10px;
+  border-bottom:1px solid var(--line);
+}
+tbody td{
+  padding:10px;
+  border-bottom:1px solid var(--line-soft);
+  white-space:nowrap;
+}
+.table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
-/* ========== Responsive Core ========== */
+/* KPIs / Badges */
+.pill{ padding:6px 10px; border-radius:16px; background:rgba(255,255,255,.06); }
+.pill.ok{   background:rgba(46,204,113,.15); }
+.pill.warn{ background:rgba(241,196,15,.15); }
+.pill.bad{  background:rgba(231,76,60,.15); }
 
-/* Tabs/Navi: auf kleineren Screens scrollen statt umbrechen */
-.nav, .tabs, .row.wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  gap: 10px;
-}
-.nav::-webkit-scrollbar, .tabs::-webkit-scrollbar { height: 6px; }
-.nav:hover::-webkit-scrollbar-thumb, .tabs:hover::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.15);
-}
+.muted{ color:var(--muted); }
 
-/* 2-Spalten-Layout: Desktop zwei, Mobile eine Spalte */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* Tabs – „wie am Anfang“: clean, ohne Rahmenplatte */
+.tabs{
+  display:flex;
+  gap:6px;
+  padding:6px 0;
+  border:none;
+  background:none;
 }
-@media (max-width: 980px) {
-  .grid-2 { grid-template-columns: 1fr; }
-  .mx-center { margin-left: 0; margin-right: 0; }
+.tab{
+  background:none;
+  border:none;
+  color:#fff;
+  font-weight:600;
+  font-size:15px;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:background .2s ease;
 }
+.tab:hover{ background:rgba(255,255,255,.08); }
+.tab.active{ background:var(--brand); color:#fff; }
 
-/* Form-Grid: 2 -> 1 Spalte auf schmal */
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-.form-grid > * { min-width: 0; }
-@media (max-width: 780px) {
-  .form-grid { grid-template-columns: 1fr; }
-  .form-grid button[type="submit"] { width: 100%; }
-}
+/* Views-Schaltung */
+.view{ display:none; }
+.view.active{ display:block; }
 
-/* Inputs/Selects/Buttons: bessere Touch-Fläche */
-input, select, button, .btn {
-  min-height: 44px;
-  font-size: 16px;           /* verhindert iOS Zoom */
+/* Footer & Social */
+footer{ margin:22px 0 10px; }
+.footer-links{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+.social-btn{
+  width:46px; height:46px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:12px;
+  background:#0d111a;
+  border:1px solid rgba(255,255,255,.12);
 }
+.social-btn svg{ transition: fill .25s ease; }
+.social-btn:hover svg{ fill: var(--hover-accent); }
 
-/* Karten-Abstände enger auf Handy */
-.card { padding: 18px; }
-@media (max-width: 520px) {
-  .card { padding: 14px; border-radius: 18px; }
+/* Dialog/Modal */
+dialog::backdrop{ background:rgba(0,0,0,.55); }
+dialog{
+  width:min(520px,92vw);
+  border:none;
+  border-radius:18px;
+  padding:18px;
+  background:#151922;
+  color:#fff;
 }
 
-/* Tabellen: horizontal scrollbar statt Layoutbruch */
-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-.table-wrap,
-#matches-list-card, #events-list-card, .table-card {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-#matches-list-card table,
-#events-list-card table,
-#players-table {
-  min-width: 680px; /* verhindert unschöne Zeilenumbrüche */
-}
-thead th, tbody td { white-space: nowrap; }
-
-/* KPI-Zeile: wrap + zentriert auf klein */
-.kpi-row, .row.between.center.wrap {
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.kpi { flex: 1 1 140px; }
-
-/* Footer: Buttons nebeneinander -> untereinander auf sehr schmal */
-.footer .row { gap: 12px; }
-@media (max-width: 520px) {
-  .footer .row { justify-content: center; }
-}
-
-/* Social Buttons bleiben groß genug */
-.social-btn { width: 46px; height: 46px; }
-
-/* Logo etwas größer, skaliert auf Mobil */
-.header-logo img, .brand img {
-  height: 34px;
-}
-@media (max-width: 520px) {
-  .header-logo img, .brand img { height: 40px; }
-}
-
-/* Read-only: rechte Karte mittig & max Breite */
+/* Read-only: rechte Listen mittig, wenn ausgeloggt */
 .readonly #matches-list-card,
-.readonly #events-list-card {
-  max-width: 980px;
-  margin-left: auto;
-  margin-right: auto;
+.readonly #events-list-card{
+  max-width:980px;
+  margin-left:auto;
+  margin-right:auto;
 }
 
-/* Dialog/Modal: volle Breite auf Mobil, max Breite Desktop */
-dialog::backdrop { background: rgba(0,0,0,.55); }
-dialog {
-  width: min(520px, 92vw);
-  border: none;
-  border-radius: 18px;
-  padding: 18px;
-  background: #151922;
-  color: #fff;
+/* Responsive */
+.nav,.tabs,.row.wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+@media (max-width:980px){
+  .grid-2{ grid-template-columns:1fr; }
+  .mx-center{ margin:0; }
 }
-@media (max-width: 520px) {
-  dialog { width: 94vw; }
+@media (max-width:780px){
+  .form-grid{ grid-template-columns:1fr; }
+  .form-grid button[type="submit"]{ width:100%; }
 }
-
-/* Pills (Win %) kleiner auf schmalen Screens */
-.pill { padding: 6px 10px; border-radius: 16px; font-size: 14px; }
-@media (max-width: 420px) {
-  .pill { font-size: 13px; padding: 5px 9px; }
+@media (max-width:520px){
+  .brand img{ height:46px; }
+  .card{ padding:14px; border-radius:18px; }
+  .pill{ font-size:13px; padding:5px 9px; }
 }
-
-/* Buttons in Toolbars dürfen umbrechen */
-.toolbar, .actions { flex-wrap: wrap; gap: 10px; }
-
-/* 1) Niemals horizontal scrollen (Safety Net) */
-html, body { max-width: 100%; overflow-x: hidden; }
-
-/* 2) Tabs dürfen scrollen, der Rest nicht */
-.nav, .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.row.wrap { overflow-x: visible; }  /* <— vorher evtl. auto; macht gerne den Extra-Scroll */
-
-/* 3) Tabellen nur auf schmalen Screens künstlich verbreitern */
-#matches-list-card table,
-#events-list-card table,
-#players-table { width: 100%; min-width: 0; }   /* Standard: keine Mindestbreite */
-@media (max-width: 880px) {
-  #matches-list-card, #events-list-card, .table-wrap { overflow-x: auto; }
-  #matches-list-card table,
-  #events-list-card table,
-  #players-table { min-width: 680px; }          /* nur mobil breiter machen */
-}
-
-/* 4) Grid & Cards produzieren keinen Überhang */
-.grid-2 { gap: 20px; }
-.card  { overflow: visible; }                   /* falls irgendwo hidden/scroll gesetzt war */
-
-/* 5) Buttons/Inputs zwingen keinen Überlauf */
-input, select, button, .btn { min-height: 44px; font-size: 16px; max-width: 100%; }
