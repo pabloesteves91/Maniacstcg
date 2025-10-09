@@ -21,6 +21,26 @@ if (window.__MANIACS_INIT__) {
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
+  /* ------------------ Rotate Tip (Mobile) ------------------ */
+  (function(){
+    const tip = document.getElementById('rotate-tip');
+    if(!tip) return;
+
+    const mqPortrait = window.matchMedia('(orientation: portrait)');
+    const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
+
+    function updateRotateTip(){
+      const show = mqSmall.matches && mqPortrait.matches;
+      tip.classList.toggle('show', show);
+    }
+
+    // initial + live updates
+    updateRotateTip();
+    mqPortrait.addEventListener?.('change', updateRotateTip);
+    mqSmall.addEventListener?.('change', updateRotateTip);
+    window.addEventListener('resize', updateRotateTip, { passive: true });
+  })();
+}
   // CSV helpers
   function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
   function toCSV(rows, order){
