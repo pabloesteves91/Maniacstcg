@@ -534,3 +534,17 @@ dialog{
   transform: scale(0.95);
   opacity: 0;
 }
+
+/* Rotate-Banner: wenn versteckt, NICHT klickbar */
+#rotate-tip {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;      /* <-- wichtig */
+  transition: opacity .2s ease, visibility .2s ease;
+  z-index: 9999;             /* bleibt über allem, wenn sichtbar */
+}
+#rotate-tip.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;      /* nur wenn sichtbar */
+}
