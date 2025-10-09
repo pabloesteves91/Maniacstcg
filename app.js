@@ -1,18 +1,11 @@
-// MANIACS · COMPETE — app.js (stable final)
-// - admin via rules-probe
-// - init-guard
-// - live re-render on admin change
-// - submit debouncing
-// - separate dashboard "Last Matches" render
-// - fixes for initial delete buttons & dropdown
-
+// MANIACS · COMPETE — app.js (final, admin via rules-probe, init-guard, debounce)
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
   query, orderBy, deleteDoc, getDoc
 } from './firebase.js';
 
-// ===== Init Guard =====
+// ===== Global Init Guard (verhindert doppelte Initialisierung) =====
 if (window.__MANIACS_INIT__) {
   console.warn('MANIACS app already initialized — skipping duplicate init.');
 } else {
@@ -23,7 +16,7 @@ if (window.__MANIACS_INIT__) {
   const $$ = (s)=>[...document.querySelectorAll(s)];
   function setActiveTab(id){
     $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
-    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`)); // <-- fixed template literal
+    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
@@ -31,6 +24,7 @@ if (window.__MANIACS_INIT__) {
   (function(){
     const tip = document.getElementById('rotate-tip');
     if(!tip) return;
+
     const mqPortrait = window.matchMedia('(orientation: portrait)');
     const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
 
@@ -38,6 +32,7 @@ if (window.__MANIACS_INIT__) {
       const show = mqSmall.matches && mqPortrait.matches;
       tip.classList.toggle('show', show);
     }
+
     updateRotateTip();
     const onPortrait = ()=>updateRotateTip();
     const onSmall = ()=>updateRotateTip();
@@ -48,12 +43,8 @@ if (window.__MANIACS_INIT__) {
     window.addEventListener('resize', updateRotateTip, { passive:true });
   })();
 
-  /* ------------------ CSV helpers ------------------ */
-  function csvEscape(v){
-    if(v==null) return '';
-    const s=String(v);
-    return /[",\n;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-  }
+  // CSV helpers
+  function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
   function toCSV(rows, order){
     const bom='\uFEFF';
     const headers = order || Object.keys(rows[0]||{});
@@ -72,12 +63,6 @@ if (window.__MANIACS_INIT__) {
   let currentUser = null;
   let isAdminUI = false;
 
-  // Caches der letzten Snapshots, damit UI sofort auf Admin-Wechsel reagieren kann
-  let cachePlayers = [];
-  let cacheMatches = [];
-  let cacheEvents  = [];
-  let cacheSponsors= [];
-
   async function checkAdminViaRulesProbe(user){
     if (!user) return false;
     try {
@@ -95,26 +80,18 @@ if (window.__MANIACS_INIT__) {
     $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
     $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
     $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+
     // 👑 Badge
     const badge = document.getElementById('role-badge');
     if (badge) badge.classList.toggle('hidden', !isAdmin);
-    // Re-render mit Caches, damit Delete-Buttons sofort sichtbar/unsichtbar werden
-    renderPlayers(cachePlayers);
-    renderMatches(cacheMatches);
-    renderEvents(cacheEvents);
-    renderSponsors(cacheSponsors);
   }
 
   /* ------------------ Auth ------------------ */
   $('#login-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email=$('#login-email').value.trim(); const pass=$('#login-pass').value;
-    try{
-      await loginEmail(email,pass);
-      $('#login-pass').value='';
-    } catch(err){
-      alert('Login fehlgeschlagen: '+(err.message||err));
-    }
+    try{ await loginEmail(email,pass); $('#login-pass').value=''; }
+    catch(err){ alert('Login fehlgeschlagen: '+(err.message||err)); }
   });
   $('#btn-logout')?.addEventListener('click', logout);
 
@@ -126,7 +103,7 @@ if (window.__MANIACS_INIT__) {
     $('#btn-logout')?.classList.toggle('hidden', !user);
     $('#login-form')?.classList.toggle('hidden', !!user);
 
-    // Badge beim Ausloggen sicher verstecken (bis Admin bestimmt ist)
+    // Badge beim Ausloggen sicher verstecken
     document.getElementById('role-badge')?.classList.toggle('hidden', !user);
 
     // Read-only Layout: linke Karten verstecken, rechte Karte mittig
@@ -184,72 +161,63 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  /* ------------------ RENDERERS ------------------ */
+  /* ------------------ Team Summary (Text) ------------------ */
+  const teamSummaryEl = document.getElementById('team-summary');   // UL
+  const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
-  // Players
-  function renderPlayers(docs){
-    cachePlayers = docs;
-    const playersTBody = $('#players-table tbody');
-    const mPlayerSelect = $('#m-player');
+  /* ------------------ Players ------------------ */
+  const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
 
-    if (playersTBody) {
-      const rows=[]; let tw=0, t8=0;
-      docs.forEach(d=>{
-        const p={id:d.id, ...d.data()};
-        const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
-        const pct=g?Math.round((p.wins||0)/g*100):0;
-        rows.push(
-          `<tr data-id="${p.id}">
-            <td>${p.name}</td>
-            <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
-            <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-            <td>${(p.decks||[]).join(', ')}</td>
-            <td>${p.top8||0}</td>
-            <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
-          </tr>`
-        );
-        tw+=(p.wins||0); t8+=(p.top8||0);
-      });
-      playersTBody.innerHTML = rows.join('');
-      $('#kpi-players').textContent = docs.length;
-      $('#kpi-wins').textContent = tw;
-      $('#kpi-top8').textContent = t8;
-
-      // Team-Top8 Summary (Dashboard)
-      const teamSummaryEl = document.getElementById('team-summary');
-      if (teamSummaryEl) {
-        const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
-        const li = existing || document.createElement('li');
-        li.setAttribute('data-stat','top8');
-        li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
-        if (!existing) teamSummaryEl.appendChild(li);
-      }
-
-      // Delete Buttons
-      if (isAdminUI) {
-        document.querySelectorAll('[data-del-p]').forEach(b=>{
-          b.onclick = async ()=>{
-            if(!currentUser || !isAdminUI) return;
-            if(!confirm('Diesen Player wirklich löschen?')) return;
-            try { await deleteDoc(docRef(C_PLAYERS, b.dataset.delP)); }
-            catch(err){ alert('Fehler beim Löschen: '+(err.message||err)); }
-          };
-        });
-      }
-    }
-
-    // Matches-Form: Player Dropdown
-    if (mPlayerSelect) {
-      const opts=[];
-      docs.forEach(d=>{
-        const p=d.data();
-        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
-      });
-      mPlayerSelect.innerHTML = opts.join('');
-    }
+  function attachPlayerDeleteButtons(){
+    $$('[data-del-p]').forEach(b=>{
+      b.onclick = async ()=>{
+        if(!currentUser) return alert('Login erforderlich.');
+        if(!isAdminUI)   return alert('Nur Admins dürfen löschen.');
+        if(!confirm('Diesen Player wirklich löschen?')) return;
+        try { await deleteDoc(docRef(C_PLAYERS, b.dataset.delP)); }
+        catch(err){ alert('Fehler beim Löschen: '+(err.message||err)); }
+      };
+    });
   }
 
-  // Matches
+  onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
+    const rows=[], opts=[]; let tw=0, t8=0;
+    snap.forEach(d=>{
+      const p={id:d.id, ...d.data()};
+      const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
+      const pct=g?Math.round((p.wins||0)/g*100):0;
+      rows.push(
+        `<tr>
+          <td>${p.name}</td>
+          <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
+          <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
+          <td>${(p.decks||[]).join(', ')}</td>
+          <td>${p.top8||0}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
+        </tr>`
+      );
+      opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
+      tw+=(p.wins||0); t8+=(p.top8||0);
+    });
+    playersTBody.innerHTML = rows.join('');
+    mPlayerSelect.innerHTML = opts.join('');
+    $('#kpi-players').textContent = snap.size;
+    $('#kpi-wins').textContent = tw;
+    $('#kpi-top8').textContent = t8;
+
+    // Team-Top8 Summary
+    if (teamSummaryEl) {
+      const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
+      const li = existing || document.createElement('li');
+      li.setAttribute('data-stat','top8');
+      li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
+      if (!existing) teamSummaryEl.appendChild(li);
+    }
+
+    attachPlayerDeleteButtons();
+  });
+
+  /* ------------------ Matches ------------------ */
   function tierToText(code){
     switch(code){
       case 'L': return 'Local';
@@ -262,182 +230,7 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  function renderMatches(docs){
-    cacheMatches = docs;
-
-    // Dashboard "Last Matches"
-    const latestTBody = document.querySelector('#latest-results tbody');
-    if (latestTBody) {
-      const latest=[]; const maxRows=6;
-      for (const d of docs) {
-        const m=d.data();
-        latest.push(
-          `<tr>
-            <td>${m.player || ''}</td>
-            <td>${m.deck || ''}</td>
-            <td>${m.opp  || ''}</td>
-            <td>${m.res  || ''}</td>
-          </tr>`
-        );
-        if (latest.length>=maxRows) break;
-      }
-      latestTBody.innerHTML = latest.length
-        ? latest.join('')
-        : `<tr><td colspan="4" class="muted">Noch keine Matches erfasst.</td></tr>`;
-    }
-
-    // Matches-Tab
-    const matchesTBody = document.querySelector('#matches-table tbody');
-    if (matchesTBody) {
-      const rows=[]; let teamW=0, teamL=0, teamD=0;
-      const deckWinCounts={};
-
-      docs.forEach(d=>{
-        const m=d.data();
-        rows.push(`
-          <tr data-id="${d.id}">
-            <td>${m.date||''}</td>
-            <td>${m.player||''}</td>
-            <td>${m.deck||''}</td>
-            <td>${m.opp ||''}</td>
-            <td>${m.res ||''}</td>
-            <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
-            <td>${isAdminUI ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>` : ''}</td>
-          </tr>
-        `);
-
-        if(m.res==='W') teamW++; else if(m.res==='L') teamL++; else if(m.res==='D') teamD++;
-        if(m.res==='W' && m.deck){ const key=m.deck.trim(); if(key) deckWinCounts[key]=(deckWinCounts[key]||0)+1; }
-      });
-
-      matchesTBody.innerHTML = rows.join('');
-
-      if (isAdminUI) {
-        document.querySelectorAll('[data-del-match]').forEach(b=>{
-          b.onclick = async ()=>{
-            if(!currentUser || !isAdminUI) return;
-            const pid = b.dataset.playerId || '';
-            await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
-            if (pid) await recomputePlayerStats(pid);
-          };
-        });
-      }
-
-      // Team summary on dashboard (W/L/D + Top-Deck), wenn vorhanden
-      const teamSummaryEl = document.getElementById('team-summary');
-      const topDeckEl     = document.getElementById('top-deck-list');
-      if (teamSummaryEl) {
-        const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
-        const wlLi = wlExisting || document.createElement('li');
-        wlLi.setAttribute('data-stat','wld');
-        wlLi.innerHTML = `<strong>Team Record</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
-        if (!wlExisting) teamSummaryEl.appendChild(wlLi);
-      }
-      if (topDeckEl) {
-        topDeckEl.innerHTML = '';
-        const best = Object.entries(deckWinCounts).sort((a,b)=>b[1]-a[1])[0];
-        if (best) {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>${best[0]}</strong><span class="grow"></span>${best[1]} Wins`;
-          topDeckEl.appendChild(li);
-        } else {
-          const li = document.createElement('li');
-          li.className = 'muted';
-          li.textContent = 'Noch keine Siege erfasst.';
-          topDeckEl.appendChild(li);
-        }
-      }
-    }
-  }
-
-  // Events
-  function renderEvents(docs){
-    cacheEvents = docs;
-    const eventsBody = $('#events-table tbody');
-    if (!eventsBody) return;
-
-    const rows=[];
-    docs.forEach(d=>{
-      const e=d.data();
-      rows.push(`
-        <tr data-id="${d.id}">
-          <td>${e.date||''}</td>
-          <td>${e.name||''}</td>
-          <td>${e.loc||''}</td>
-          <td>${e.type||''}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
-        </tr>
-      `);
-    });
-    eventsBody.innerHTML = rows.join('');
-
-    if (isAdminUI) {
-      document.querySelectorAll('[data-del-event]').forEach(b=>{
-        b.onclick = async ()=>{
-          if(!currentUser || !isAdminUI) return;
-          await deleteDoc(docRef(C_EVENTS, b.dataset.delEvent));
-        };
-      });
-    }
-  }
-
-  // Sponsors
-  function renderSponsors(docs){
-    cacheSponsors = docs;
-    const sponsList = $('#sponsor-list');
-    if (!sponsList) return;
-
-    const items=[];
-    docs.forEach(d=>{
-      const s={id:d.id, ...d.data()};
-      const host = s.url ? new URL(s.url).host : '—';
-      items.push(`
-        <li data-id="${s.id}">
-          <strong>${s.name}</strong>
-          <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
-          <span class="grow"></span>
-          ${isAdminUI ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
-        </li>
-      `);
-    });
-    sponsList.innerHTML = items.join('');
-
-    if (isAdminUI) {
-      document.querySelectorAll('[data-del-s]').forEach(b=>{
-        b.onclick = async ()=>{
-          if(!currentUser || !isAdminUI) return;
-          await deleteDoc(docRef(C_SPONS, b.dataset.delS));
-        };
-      });
-    }
-  }
-
-  /* ------------------ Snapshots (live) ------------------ */
-  onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
-    const docs = [];
-    snap.forEach(d=>docs.push(d));
-    renderPlayers(docs);
-  });
-
-  onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
-    const docs = [];
-    snap.forEach(d=>docs.push(d));
-    renderMatches(docs);
-  });
-
-  onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
-    const docs = [];
-    snap.forEach(d=>docs.push(d));
-    renderEvents(docs);
-  });
-
-  onSnapshot(col(C_SPONS), (snap)=>{
-    const docs = [];
-    snap.forEach(d=>docs.push(d));
-    renderSponsors(docs);
-  });
-
-  /* ------------------ Recompute Player Stats ------------------ */
+  // Player-Stats aus allen Matches neu berechnen
   async function recomputePlayerStats(playerId){
     if(!playerId) return;
     const allMatchesSnap = await getDocs(query(col(C_MATCHES), orderBy('date','desc')));
@@ -448,27 +241,23 @@ if (window.__MANIACS_INIT__) {
       if(m.res==='W') wins++; else if(m.res==='L') losses++; else if(m.res==='D') draws++;
       if(m.deck) decksSet.add(String(m.deck).trim());
     });
-    const pRef = docRef(C_PLAYERS, playerId);
-    const playerDocs = await getDocs(query(col(C_PLAYERS)));
-    for (const d of playerDocs.docs) {
+    const playersSnap = await getDocs(query(col(C_PLAYERS)));
+    for (const d of playersSnap.docs) {
       if (d.id === playerId) {
         const p = d.data();
-        await setDoc(pRef, { ...p, wins, losses, draws, decks: [...decksSet] });
+        await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
       }
     }
   }
 
-  /* ------------------ Forms ------------------ */
   $('#match-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    e.stopPropagation();
     if(submitting.match) return;
     if(!currentUser) return alert('Login erforderlich.');
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
-    const opt=$('#m-player')?.selectedOptions?.[0];
-    const playerId=opt?.value || '';
-    const playerName=opt?.dataset.name || '';
+    const opt=mPlayerSelect.selectedOptions[0];
+    const playerId=opt?.value; const playerName=opt?.dataset.name||'';
     const m={
       date: $('#m-date').value || new Date().toISOString().slice(0,10),
       playerId, player:playerName,
@@ -483,7 +272,6 @@ if (window.__MANIACS_INIT__) {
       btn?.setAttribute('disabled','disabled');
       await addDoc(col(C_MATCHES), m);
       if (playerId) await recomputePlayerStats(playerId);
-      // Formular leeren, aber auf dem Tab bleiben
       e.target.reset();
     } finally {
       submitting.match = false;
@@ -491,6 +279,86 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
+  const matchesTBody=$('#matches-table tbody'); const latestTBody=$('#latest-results tbody');
+
+  onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
+    const rows=[], latest=[];
+    let teamW = 0, teamL = 0, teamD = 0;
+    const deckWinCounts = {}; // deck -> wins
+
+    snap.forEach(d=>{
+      const m=d.data();
+      rows.push(`
+        <tr>
+          <td>${m.date||''}</td>
+          <td>${m.player||''}</td>
+          <td>${m.deck||''}</td>
+          <td>${m.opp||''}</td>
+          <td>${m.res||''}</td>
+          <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>` : ''}</td>
+        </tr>
+      `);
+
+      if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
+
+      if (m.res === 'W') teamW++;
+      else if (m.res === 'L') teamL++;
+      else if (m.res === 'D') teamD++;
+
+      if (m.res === 'W' && m.deck) {
+        const key = m.deck.trim();
+        if (key) deckWinCounts[key] = (deckWinCounts[key] || 0) + 1;
+      }
+    });
+
+    matchesTBody.innerHTML = rows.join('');
+    latestTBody.innerHTML  = latest.join('');
+
+    $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!currentUser) return;
+      if(!isAdminUI)   return;
+      const pid = b.dataset.playerId || '';
+      await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
+      if (pid) await recomputePlayerStats(pid);
+    }));
+
+    // Team Summary (W/L/D)
+    if (teamSummaryEl) {
+      const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
+      const wlLi = wlExisting || document.createElement('li');
+      wlLi.setAttribute('data-stat','wld');
+      wlLi.innerHTML = `<strong>Team Record</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
+      if (!wlExisting) teamSummaryEl.appendChild(wlLi);
+
+      if (!teamSummaryEl.querySelector('[data-stat="top8"]')) {
+        const top8Li = document.createElement('li');
+        top8Li.setAttribute('data-stat','top8');
+        top8Li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${$('#kpi-top8').textContent}`;
+        teamSummaryEl.appendChild(top8Li);
+      }
+    }
+
+    // Top Deck (Wins)
+    if (topDeckEl) {
+      topDeckEl.innerHTML = '';
+      const decks = Object.keys(deckWinCounts);
+      if (decks.length) {
+        decks.sort((a,b)=>deckWinCounts[b]-deckWinCounts[a]);
+        const best = decks[0];
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${best}</strong><span class="grow"></span>${deckWinCounts[best]} Wins`;
+        topDeckEl.appendChild(li);
+      } else {
+        const li = document.createElement('li');
+        li.className = 'muted';
+        li.textContent = 'Noch keine Siege erfasst.';
+        topDeckEl.appendChild(li);
+      }
+    }
+  });
+
+  /* ------------------ Events ------------------ */
   $('#event-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
@@ -504,6 +372,31 @@ if (window.__MANIACS_INIT__) {
     e.target.reset();
   });
 
+  const eventsBody=$('#events-table tbody');
+  onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
+    const rows=[];
+    snap.forEach(d=>{
+      const e=d.data();
+      rows.push(`
+        <tr>
+          <td>${e.date||''}</td>
+          <td>${e.name||''}</td>
+          <td>${e.loc||''}</td>
+          <td>${e.type||''}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
+        </tr>
+      `);
+    });
+    eventsBody.innerHTML = rows.join('');
+
+    $$('[data-del-event]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!currentUser) return;
+      if(!isAdminUI)   return;
+      await deleteDoc(docRef(C_EVENTS, b.dataset.delEvent));
+    }));
+  });
+
+  /* ------------------ Sponsors ------------------ */
   $('#sponsor-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
@@ -513,7 +406,30 @@ if (window.__MANIACS_INIT__) {
     e.target.reset();
   });
 
-  /* ------------------ Exports ------------------ */
+  const sponsList=$('#sponsor-list');
+  onSnapshot(col(C_SPONS), (snap)=>{
+    const items=[];
+    snap.forEach(d=>{
+      const s={id:d.id, ...d.data()};
+      const host = s.url ? new URL(s.url).host : '—';
+      items.push(`
+        <li>
+          <strong>${s.name}</strong>
+          <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
+          <span class="grow"></span>
+          ${isAdminUI ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
+        </li>
+      `);
+    });
+    sponsList.innerHTML = items.join('');
+    $$('[data-del-s]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!currentUser) return;
+      if(!isAdminUI)   return;
+      await deleteDoc(docRef(C_SPONS, b.dataset.delS));
+    }));
+  });
+
+  /* ------------------ CSV Exports ------------------ */
   $('#export-players')?.addEventListener('click', async ()=>{
     const snap=await getDocs(query(col(C_PLAYERS), orderBy('name'))); const rows=[];
     snap.forEach(d=>{
