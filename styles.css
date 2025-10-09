@@ -548,3 +548,15 @@ dialog{
   visibility: visible;
   pointer-events: auto;      /* nur wenn sichtbar */
 }
+
+/* Select im Match-Form immer klickbar/oberhalb */
+#match-form select,
+#match-form input,
+#match-form button {
+  position: relative;
+  z-index: 2;
+}
+
+/* Safety: Das Overlay blockt nur im .show-Zustand */
+#rotate-tip { pointer-events:none; }
+#rotate-tip.show { pointer-events:auto; }
