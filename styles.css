@@ -257,11 +257,11 @@ dialog{
   font-size: 30px;  /* statt 36px, also nur ein Tick größer */
 }
 
-/* Streak Leader gleich groß wie andere, nur rot */
+/* Streak Leader kleiner als andere KPIs */
 .kpi-box .kpi-value.streak {
   color: #e33;
-  font-size: 30px; /* exakt gleiche Höhe/Größe */
-}
+  font-size: 28px;   /* kleiner als die 36px der anderen KPIs */
+  font-weight: 700;  /* etwas leichter, nicht so massiv */
 }
 @media (max-width:700px){
   .kpi-row{ gap:16px; }
