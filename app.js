@@ -1,4 +1,4 @@
-// MANIACS · COMPETE — app.js (ohne Registrierung, Owner-Rechte)
+// MANIACS · COMPETE — app.js (Login-only, Tabs minimal, Player-Delete fix, Owner-Rechte)
 
 import {
   loginEmail, logout, onUser,
@@ -6,9 +6,10 @@ import {
   query, orderBy, deleteDoc
 } from './firebase.js';
 
-// ----- Helpers & Tabs -----
+/* ===== Helpers & Tabs ===== */
 const $  = (s)=>document.querySelector(s);
 const $$ = (s)=>[...document.querySelectorAll(s)];
+
 function setActiveTab(id){
   $$('.tab')?.forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
   $$('.view')?.forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
@@ -17,7 +18,7 @@ $$('.tab')?.forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab
 
 const OWNER_EMAIL = "fabioberta@me.com";
 
-// CSV helpers
+/* ===== CSV helpers ===== */
 function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
 function toCSV(rows, order){
   const bom='\uFEFF';
@@ -33,7 +34,7 @@ function downloadCSV(filename, rows, order){
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
-// ----- Auth -----
+/* ===== Auth ===== */
 $('#login-form')?.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const email=$('#login-email').value.trim(); const pass=$('#login-pass').value;
@@ -69,10 +70,10 @@ onUser(async (user)=>{
   $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
 });
 
-// ----- Collections -----
+/* ===== Collections ===== */
 const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
-// ----- Player Modal -----
+/* ===== Player Modal ===== */
 const playerModal = $('#player-modal');
 function openPlayerModal(){
   if(!currentUser) return alert('Bitte zuerst einloggen.');
@@ -81,6 +82,7 @@ function openPlayerModal(){
 }
 $('#btn-open-player')?.addEventListener('click', openPlayerModal);
 
+// Submit-Debounce Flags
 const submitting = { player:false, match:false };
 
 $('#player-form')?.addEventListener('submit', async (e)=>{
@@ -99,12 +101,28 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   } finally { submitting.player=false; btn?.removeAttribute('disabled'); }
 });
 
-// ----- Team Stats Targets -----
+/* ===== Team Stats Targets ===== */
 const teamSummaryEl = document.getElementById('team-summary');
 const topDeckEl     = document.getElementById('top-deck-list');
 
-// ----- Players -----
-const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
+/* ===== Players ===== */
+const playersTBody=$('#players-table tbody');
+const mPlayerSelect=$('#m-player');
+
+function attachPlayerDeleteButtons(){
+  $$('[data-del-p]').forEach(b=>{
+    b.onclick = async ()=>{
+      if(!currentUser) return alert('Login erforderlich.');
+      if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf löschen.');
+      if(!confirm('Diesen Player wirklich löschen?')) return;
+      try {
+        await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
+      } catch(err){
+        alert('Fehler beim Löschen: '+(err.message||err));
+      }
+    };
+  });
+}
 
 onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   const rows=[], opts=[]; let tw=0, t8=0;
@@ -140,14 +158,10 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
     if (!existing) teamSummaryEl.appendChild(li);
   }
 
-  $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
-    if(!currentUser) return;
-    if(currentUser.email !== OWNER_EMAIL) return;
-    await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
-  }));
+  attachPlayerDeleteButtons();
 });
 
-// ----- Matches -----
+/* ===== Matches ===== */
 function tierToText(code){
   switch(code){
     case 'L': return 'Local';
@@ -205,7 +219,8 @@ $('#match-form')?.addEventListener('submit', async (e)=>{
   } finally { submitting.match=false; btn?.removeAttribute('disabled'); }
 });
 
-const matchesTBody=$('#matches-table tbody'); const latestTBody=$('#latest-results tbody');
+const matchesTBody=$('#matches-table tbody');
+const latestTBody=$('#latest-results tbody');
 
 onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   const rows=[], latest=[];
@@ -245,6 +260,7 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   matchesTBody.innerHTML = rows.join('');
   latestTBody.innerHTML  = latest.join('');
 
+  // Delete Match + Recompute
   $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!currentUser) return;
     if(currentUser.email !== OWNER_EMAIL) return;
@@ -253,7 +269,7 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
     if (pid) await recomputePlayerStats(pid);
   }));
 
-  // Team Summary rendern
+  // Team Summary (W/L/D)
   if (teamSummaryEl) {
     const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
     const wlLi = wlExisting || document.createElement('li');
@@ -288,7 +304,7 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   }
 });
 
-// ----- Events -----
+/* ===== Events ===== */
 $('#event-form')?.addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -326,7 +342,7 @@ onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
   }));
 });
 
-// ----- Sponsors -----
+/* ===== Sponsors ===== */
 $('#sponsor-form')?.addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -359,7 +375,7 @@ onSnapshot(col(C_SPONS), (snap)=>{
   }));
 });
 
-// ----- CSV Exports -----
+/* ===== CSV Exports ===== */
 $('#export-players')?.addEventListener('click', async ()=>{
   const snap=await getDocs(query(col(C_PLAYERS), orderBy('name'))); const rows=[];
   snap.forEach(d=>{
