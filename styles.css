@@ -1,11 +1,15 @@
+/* ============================
+   MANIACS · COMPETE — styles.css
+   Dark sporty UI, red/white accent
+   ============================ */
+
 :root{
   --mx-bg:#0f1115;
   --mx-card:#161922;
   --mx-card-2:#1b1f2a;
   --mx-text:#eef1f6;
   --mx-muted:#9aa3b2;
-  --mx-red:#E30613;        /* MANIACS-Rot */
-  --mx-accent:#ff3b3b;
+  --mx-red:#E30613;        /* MANIACS Rot */
   --mx-border:#252a36;
   --mx-ok:#00c853;
   --mx-warn:#ffb300;
@@ -13,7 +17,11 @@
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--mx-bg);color:var(--mx-text);font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+html,body{
+  margin:0; padding:0;
+  background:var(--mx-bg); color:var(--mx-text);
+  font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
 
 .container{max-width:1100px;margin:0 auto;padding:16px;}
 .row{display:flex;gap:12px}
@@ -22,60 +30,113 @@ html,body{margin:0;padding:0;background:var(--mx-bg);color:var(--mx-text);font:1
 .center{align-items:center}
 .end{justify-content:flex-end}
 .between{justify-content:space-between}
-.gap-8{gap:8px}.gap-12{gap:12px}
+.gap-8{gap:8px}
+.gap-12{gap:12px}
+.right{justify-content:flex-end}
 
 h1,h2,h3{margin:0 0 8px}
 h1{font-size:24px;font-weight:800;letter-spacing:.5px}
 h3{font-weight:700}
-
 .muted{color:var(--mx-muted)}
-.btn{background:var(--mx-red);border:none;color:white;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
-.btn:hover{filter:brightness(1.1)}
+
+.btn{
+  background:var(--mx-red); border:none; color:white;
+  padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700
+}
+.btn:hover{filter:brightness(1.08)}
 .btn.ghost{background:transparent;border:1px solid var(--mx-border);color:var(--mx-text)}
 .hidden{display:none !important}
 
-input,select{background:#0b0d12;border:1px solid var(--mx-border);color:var(--mx-text);padding:10px;border-radius:10px;outline:none;min-height:40px}
+input,select{
+  background:#0b0d12; border:1px solid var(--mx-border); color:var(--mx-text);
+  padding:10px; border-radius:10px; outline:none; min-height:40px
+}
 label{display:flex;flex-direction:column;gap:6px}
 
-.app-header{background:linear-gradient(180deg,#121521 0%, #0e1119 100%);border-bottom:1px solid var(--mx-border)}
-.logo{width:40px;height:40px;background:url('Maniacs_Logo_w.png') center/contain no-repeat;filter:drop-shadow(0 0 6px rgba(227,6,19,.35))}
+.app-header{
+  background:linear-gradient(180deg,#121521 0%, #0e1119 100%);
+  border-bottom:1px solid var(--mx-border)
+}
+
+/* Bigger white logo */
+.logo img{
+  height:64px; width:auto; display:block;
+  filter:drop-shadow(0 0 6px rgba(227,6,19,.35));
+}
+
 .tabs{display:flex;gap:8px;padding:0 16px 12px 16px}
-.tab{background:transparent;border:1px solid var(--mx-border);color:var(--mx-text);padding:10px 12px;border-radius:999px;cursor:pointer}
+.tab{
+  background:transparent;border:1px solid var(--mx-border);
+  color:var(--mx-text); padding:10px 12px; border-radius:999px; cursor:pointer
+}
 .tab.active{background:var(--mx-red);border-color:transparent}
 
 .view{display:none}
 .view.active{display:block}
 
-.card{background:var(--mx-card);border:1px solid var(--mx-border);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 6px 30px rgba(0,0,0,.25)}
+.card{
+  background:var(--mx-card); border:1px solid var(--mx-border);
+  border-radius:16px; padding:16px; margin:12px 0;
+  box-shadow:0 6px 30px rgba(0,0,0,.25)
+}
 .card h3{margin-bottom:8px}
 
+/* KPI tiles */
 .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .kpi .box{background:var(--mx-card-2);border:1px solid var(--mx-border);border-radius:14px;padding:12px}
 .kpi .label{color:var(--mx-muted);font-size:12px}
 .kpi .val{font-size:28px;font-weight:800}
 
+/* Layout grids */
 .grid-2{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid input,.form-grid select{width:100%}
+.form-grid button{grid-column:1/-1}
 
-table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;border:1px solid var(--mx-border)}
+/* Tables */
+table{
+  width:100%; border-collapse:separate; border-spacing:0;
+  overflow:hidden; border-radius:12px; border:1px solid var(--mx-border)
+}
 th,td{padding:10px 12px;border-bottom:1px solid var(--mx-border);text-align:left}
 thead th{background:#121623}
 tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
 
+/* Pills */
 .pill{padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px}
 .pill.ok{background:rgba(0,200,83,.15);color:var(--mx-ok)}
 .pill.warn{background:rgba(255,179,0,.15);color:var(--mx-warn)}
 .pill.bad{background:rgba(255,82,82,.15);color:var(--mx-bad)}
 
+/* Lists */
 .list{list-style:none;padding:0;margin:0}
-.list li{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--mx-border)}
+.list li{
+  display:flex;gap:10px;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--mx-border)
+}
 .list a{color:var(--mx-muted);text-decoration:none}
 .grow{flex:1}
 
-.modal{background:var(--mx-card);border:1px solid var(--mx-border);border-radius:14px;padding:16px;color:var(--mx-text);min-width:280px}
-dialog::backdrop{background:rgba(0,0,0,.5)}
+/* Dialog / Modal */
+.modal{
+  background:var(--mx-card); border:1px solid var(--mx-border);
+  border-radius:14px; padding:16px; color:var(--mx-text); min-width:280px
+}
+dialog::backdrop{background:rgba(0,0,0,.55)}
 
+/* Footer */
 .footer{border-top:1px solid var(--mx-border);margin-top:24px}
-.footer .cta a{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--mx-border);text-decoration:none;color:var(--mx-text)}
+.footer .cta a{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:999px;border:1px solid var(--mx-border);
+  text-decoration:none;color:var(--mx-text)
+}
 .footer .cta a:hover{border-color:var(--mx-red)}
-.footer .cta svg{width:18px;height:18px}
+
+/* Read-only layout: hide left forms, center right card */
+.mx-center{max-width:860px;margin:0 auto}
+.readonly .grid-2{grid-template-columns:1fr}
+
+/* Small helpers */
+#user-info{min-width:160px;text-align:right}
