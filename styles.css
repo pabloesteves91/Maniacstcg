@@ -277,3 +277,19 @@ dialog{
   color: var(--muted);
   letter-spacing: 1px;
 }
+
+.role-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  margin-left:8px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:13px;
+  background:rgba(227,6,19,.15);        /* soft MANIACS-rot */
+  border:1px solid rgba(227,6,19,.35);
+  color:#fff;
+  user-select:none;
+}
+.hidden { display:none !important; }
