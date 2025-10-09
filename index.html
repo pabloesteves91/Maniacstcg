@@ -2,11 +2,27 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TEAM MANIACS</title>
+  <link rel="icon" href="Maniacs_Logo_w.png" type="image/png" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/maniacs-icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Maniacs">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="firebase.js?v=2"></script>
   <script type="module" src="app.js?v=13"></script>
 </head>
+<!-- ADD: zentrierter Rotate-Banner -->
+<div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
+  <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
+    <div class="rotate-icon" aria-hidden="true">↻</div>
+    <div class="rotate-text">
+      Für bessere Übersicht bitte <strong>quer drehen</strong>.
+    </div>
+  </div>
+</div>
 <body>
 <header class="app-header">
   <div class="container row between center wrap">
@@ -16,6 +32,7 @@
       </div>
       <h1 class="app-title">TEAM MANIACS <span class="muted">· STATS</span></h1>
     </div>
+
     <div class="row center gap-8">
       <span id="user-info" class="muted"></span>
       <span id="role-badge" class="role-badge hidden" aria-label="Admin" title="Admin">👑 Admin</span>
@@ -27,38 +44,51 @@
       <button id="btn-logout" class="btn ghost hidden">Logout</button>
     </div>
   </div>
+
+  <nav class="tabs container" aria-label="Bereiche">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="players">Players</button>
+    <button class="tab" data-tab="matches">Matches</button>
+    <button class="tab" data-tab="events">Events</button>
+    <button class="tab" data-tab="sponsors">Sponsors</button>
+  </nav>
 </header>
 
 <main class="container">
-
-  <!-- Spieler Modal (Player anlegen) -->
-  <dialog id="player-modal" aria-labelledby="player-modal-title">
-    <form id="player-form" method="dialog" class="modal" aria-label="Player anlegen">
-      <h3 id="player-modal-title">Neuer Player</h3>
-      <input id="p-name" type="text" placeholder="Name" required aria-label="Name" />
-      <input id="p-decks" type="text" placeholder="Decks (kommagetrennt)" aria-label="Decks" />
-      <div class="row end gap-8">
-        <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button class="btn" type="submit">Speichern</button>
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view active" aria-labelledby="dash-title">
+    <div class="card dashboard-kpis">
+      <h3 id="dash-title" class="dashboard-title">Team Stats</h3>
+      <div class="kpi-row">
+        <div class="kpi-box">
+          <div class="kpi-label">Players</div>
+          <div class="kpi-value" id="kpi-players">0</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Wins Total</div>
+          <div class="kpi-value" id="kpi-wins">0</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Top 8</div>
+          <div class="kpi-value" id="kpi-top8">0</div>
+        </div>
       </div>
-    </form>
-  </dialog>
-
-  <!-- Player Management Bereich -->
-  <section id="view-players" class="view active" aria-labelledby="players-title">
-    <div class="row" style="gap:8px; margin-bottom:8px;">
-      <button class="btn hidden" id="btn-open-player">+ Player</button>
+      <div class="row end" style="margin-top:16px;">
+        <button class="btn ghost" id="export-stats">Export Stats (CSV)</button>
+      </div>
     </div>
+
     <div class="card">
+      <h3>Last Matches</h3>
+      <!-- ADD: table-wrap for horizontal scroll on small screens -->
       <div class="table-wrap">
-        <table id="players-table" aria-label="Players Tabelle">
+        <table id="latest-results" aria-label="Letzte Matches Tabelle">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Record</th>
-              <th>Top 8</th>
-              <th>Decks</th>
-              <th></th>
+              <th scope="col">Player</th>
+              <th scope="col">Deck</th>
+              <th scope="col">Opponent</th>
+              <th scope="col">Result</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -67,34 +97,189 @@
     </div>
   </section>
 
-  <!-- Match Erfassen -->
-  <section id="view-matches" class="view" aria-labelledby="matches-title">
-    <div class="card" id="matches-form-card">
-      <h3 id="matches-title">Match erfassen</h3>
-      <form id="match-form" class="form-grid" aria-label="Match erfassen">
-        <input type="date" id="m-date" aria-label="Datum" />
-        <select id="m-player" aria-label="Player auswählen" required></select>
-        <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck" />
-        <input type="text" id="m-opp" placeholder="Gegner" aria-label="Gegner" />
-        <select id="m-res" aria-label="Ergebnis">
-          <option value="W">Win</option>
-          <option value="L">Loss</option>
-          <option value="D">Draw</option>
-        </select>
-        <select id="m-tier" aria-label="Event-Level">
-          <option value="L">Local</option>
-          <option value="R">Regional</option>
-          <option value="I">International</option>
-          <option value="C">Challenge</option>
-          <option value="S">Special</option>
-          <option value="W">Worlds</option>
-        </select>
-        <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" aria-label="Event-Notiz" />
-        <button type="submit" class="btn">Speichern</button>
-      </form>
+  <!-- PLAYERS -->
+  <section id="view-players" class="view" aria-labelledby="players-title">
+    <div class="row" style="gap:8px;margin-bottom:8px;">
+      <button class="btn hidden" id="btn-open-player">+ Player</button>
+      <button class="btn ghost" id="export-players">Export Players (CSV)</button>
+    </div>
+    <div class="card">
+      <!-- ADD: table-wrap -->
+      <div class="table-wrap">
+        <table id="players-table" aria-label="Players Tabelle">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Record</th>
+              <th scope="col">Win %</th>
+              <th scope="col">Decks</th>
+              <th scope="col">Top 8</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
+  <!-- MATCHES -->
+  <section id="view-matches" class="view" aria-labelledby="matches-title">
+    <div class="grid-2">
+
+      <!-- Formular zum Match-Eintragen -->
+      <div class="card" id="matches-form-card">
+        <h3 id="matches-title">Enter Match</h3>
+        <form id="match-form" class="form-grid" aria-label="Match erfassen">
+          <input type="date" id="m-date" aria-label="Datum" />
+
+          <select id="m-player" aria-label="Player auswählen"></select>
+
+          <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck" />
+          <input type="text" id="m-opp" placeholder="Opponent" aria-label="Gegner" />
+
+          <!-- Match-Ergebnis -->
+          <select id="m-res" aria-label="Ergebnis">
+            <option value="W">Win</option>
+            <option value="L">Loss</option>
+            <option value="D">Draw</option>
+          </select>
+
+          <!-- Event-Level -->
+          <select id="m-tier" aria-label="Event-Level">
+            <option value="L">Local</option>
+            <option value="R">Regional</option>
+            <option value="I">International</option>
+            <option value="C">Challenge</option>
+            <option value="S">Special</option>
+            <option value="W">Worlds</option>
+          </select>
+
+          <!-- Freitext-Kommentar zum Event -->
+          <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" aria-label="Event-Notiz" />
+
+          <button type="submit" class="btn">Save</button>
+        </form>
+      </div>
+
+      <!-- Match-Liste -->
+      <div class="card" id="matches-list-card">
+        <div class="row between center wrap">
+          <h3>All Matches</h3>
+          <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
+        </div>
+        <!-- ADD: table-wrap -->
+        <div class="table-wrap">
+          <table id="matches-table" aria-label="Matches Tabelle">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Player</th>
+                <th scope="col">Deck</th>
+                <th scope="col">Opponent</th>
+                <th scope="col">Result</th>
+                <th scope="col">Event</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- EVENTS -->
+  <section id="view-events" class="view" aria-labelledby="events-title">
+    <div class="grid-2">
+      <div class="card" id="events-form-card">
+        <h3 id="events-title">Enter Event</h3>
+        <form id="event-form" class="form-grid" aria-label="Event erfassen">
+          <input type="text" id="ev-name" placeholder="Event-Name" required aria-label="Event-Name" />
+          <input type="date" id="ev-date" required aria-label="Datum" />
+          <input type="text" id="ev-loc" placeholder="Location" required aria-label="Ort" />
+          <input type="text" id="ev-type" placeholder="Typ" aria-label="Typ" />
+          <button type="submit" class="btn">Save</button>
+        </form>
+      </div>
+
+      <div class="card" id="events-list-card">
+        <div class="row between center wrap">
+          <h3>Events</h3>
+          <button class="btn ghost" id="export-events">Export Events (CSV)</button>
+        </div>
+        <!-- ADD: table-wrap -->
+        <div class="table-wrap">
+          <table id="events-table" aria-label="Events Tabelle">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Name</th>
+                <th scope="col">Location</th>
+                <th scope="col">Type</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPONSORS -->
+  <section id="view-sponsors" class="view" aria-labelledby="sponsors-title">
+    <div class="grid-2">
+      <div class="card" id="sponsor-form-card">
+        <h3 id="sponsors-title">Enter Sponsor</h3>
+        <form id="sponsor-form" class="form-grid" aria-label="Sponsor erfassen">
+          <input type="text" id="sp-name" placeholder="Sponsor" required aria-label="Sponsor-Name" />
+          <input type="url" id="sp-url" placeholder="https://…" aria-label="Sponsor-URL" />
+          <button type="submit" class="btn">Save</button>
+        </form>
+      </div>
+
+      <div class="card" id="sponsor-list-card">
+        <div class="row between center wrap">
+          <h3>Active Sponsors</h3>
+          <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
+        </div>
+        <ul id="sponsor-list" class="list" aria-label="Sponsorenliste"></ul>
+      </div>
+    </div>
+  </section>
 </main>
+
+<dialog id="player-modal" aria-labelledby="player-modal-title">
+  <form id="player-form" method="dialog" class="modal" aria-label="Player anlegen">
+    <h3 id="player-modal-title">new Player</h3>
+    <input id="p-name" type="text" placeholder="Name" required aria-label="Name" />
+    <input id="p-decks" type="text" placeholder="Decks (kommagetrennt)" aria-label="Decks" />
+    <div class="row end gap-8">
+      <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
+      <button class="btn" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<footer class="footer">
+  <div class="container row between center wrap" style="padding:16px 0;">
+    <div class="muted">© TEAM MANIACS · TCG</div>
+    <div class="social-buttons row" style="gap:12px">
+      <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" aria-label="Instagram">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zm4.25 4A4.75 4.75 0 1 1 7.25 12a4.75 4.75 0 0 1 4.75-4.75zm0 1.5A3.25 3.25 0 1 0 15.25 12a3.25 3.25 0 0 0-3.25-3.25zm5.5-.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
+        </svg>
+      </a>
+
+      <a class="social-btn" href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" aria-label="Discord">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19.54 4.47A17.3 17.3 0 0 0 15.86 3a12.36 12.36 0 0 0-.61 1.26 16.43 16.43 0 0 0-4.5 0A12.94 12.94 0 0 0 10.14 3 17.29 17.29 0 0 0 6.46 4.47C3.75 8.37 3.05 12.18 3.28 15.94a17.55 17.55 0 0 0 5.3 2.73A12.79 12.79 0 0 0 9.74 17a10.9 10.9 0 0 1-1.7-.83 3.86 3.86 0 0 0 .62-.48 7.91 7.91 0 0 0 7.68 0 4.4 4.4 0 0 0 .63.48 11.05 11.05 0 0 1-1.72.83 12.77 12.77 0 0 0 1.17 1.68 17.61 17.61 0 0 0 5.31-2.73c.37-5.18-.65-8.95-2.19-11.74zM9.5 14.5c-.9 0-1.63-.83-1.63-1.84S8.6 10.8 9.5 10.8s1.64.83 1.63 1.84S10.4 14.5 9.5 14.5zm5 0c-.9 0-1.63-.83-1.63-1.84s.73-1.84 1.63-1.84 1.63.83 1.63 1.84S15.4 14.5 14.5 14.5z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
