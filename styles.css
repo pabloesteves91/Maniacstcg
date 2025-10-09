@@ -293,3 +293,145 @@ dialog{
   user-select:none;
 }
 .hidden { display:none !important; }
+
+/* ------------------------------------------
+   A11y: klarer Tastatur-Fokus (additiv)
+------------------------------------------ */
+:where(a, button, [role="button"], input, select, textarea):focus-visible{
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------
+   Tabs: mobil scroll- & snapbar (additiv)
+------------------------------------------ */
+.tabs{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type: x mandatory;
+}
+.tab{ flex:0 0 auto; scroll-snap-align:start; }
+
+/* ------------------------------------------
+   Tabellen: sichere Scroll-Lösungen (additiv)
+   - Falls Tabellen NICHT in .table-wrap liegen, 
+     mache die Tabelle selbst horizontal scrollfähig.
+------------------------------------------ */
+.card > table{
+  /* greift nur, wenn keine .table-wrap vorhanden ist */
+  display:block;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border-spacing:0;                 /* beibehalten */
+}
+.card > table thead, 
+.card > table tbody, 
+.card > table tfoot{
+  width:max-content;                /* damit nicht gequetscht wird */
+  min-width:100%;
+  display:table;                    /* head/body bleiben Tabellen-Kontext */
+  table-layout:fixed;
+}
+
+/* ------------------------------------------
+   Header: kompakt umbrechen, Badge & Login stacken
+------------------------------------------ */
+@media (max-width:980px){
+  .app-header .container{ row-gap:10px; }
+  .app-header .logo img{ height:32px; }
+  .app-header .app-title{ line-height:1.15; }
+  #role-badge{ margin-left:0; }
+}
+
+@media (max-width:780px){
+  /* Login-Form stackt */
+  #login-form{
+    flex-direction:column;
+    align-items:stretch;
+    width:min(360px, 100%);
+    gap:8px;
+  }
+  #login-form input,
+  #login-form button{ width:100%; }
+  #btn-logout{ width:100%; }
+}
+
+@media (max-width:520px){
+  .app-header .logo img{ height:28px; }
+  .app-header .app-title{ font-size:18px; }
+  #user-info{ max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  #role-badge{ align-self:flex-start; }
+}
+
+/* ------------------------------------------
+   Tabs: kleine Bildschirme -> besser greifbar
+------------------------------------------ */
+@media (max-width:520px){
+  .tabs{ gap:4px; }
+  .tab{ padding:10px 12px; }
+}
+@media (max-width:400px){
+  .tab{ padding:9px 10px; font-size:14px; }
+}
+
+/* ------------------------------------------
+   Grids/Formulare: Stack & Touch-Targets
+------------------------------------------ */
+@media (max-width:980px){
+  .grid-2{ grid-template-columns:1fr; }
+  .mx-center{ margin-left:0; margin-right:0; }
+}
+
+@media (max-width:780px){
+  .form-grid{ grid-template-columns:1fr; }
+  .form-grid > *{ min-width:0; } /* Inputs dürfen schrumpfen */
+  .form-grid button[type="submit"]{ width:100%; }
+}
+
+@media (max-width:520px){
+  input,select,button{ min-height:48px; } /* größere Touch-Ziele */
+}
+
+/* ------------------------------------------
+   KPI-Kacheln: Wrap & kompakter unter 780/520
+------------------------------------------ */
+@media (max-width:780px){
+  .kpi-row{ gap:16px; }
+  .kpi-box{ padding:16px 18px; }
+  .kpi-value{ font-size:28px; }
+}
+@media (max-width:520px){
+  .kpi-box{ min-width:130px; padding:14px 16px; }
+  .kpi-label{ font-size:14px; }
+  .kpi-value{ font-size:24px; }
+}
+
+/* ------------------------------------------
+   Tabellen: Kopfzeile sticky auf kleinen Screens
+   (nur optisches Plus, funktioniert in den scrollbaren Containern)
+------------------------------------------ */
+@media (max-width:980px){
+  table thead th{
+    position:sticky;
+    top:0;
+    background:var(--card);
+    z-index:1;
+  }
+}
+
+/* ------------------------------------------
+   Footer-Buttons: auf Mobile full-width gruppiert
+------------------------------------------ */
+@media (max-width:520px){
+  .social-buttons{ width:100%; justify-content:space-between; }
+  .social-btn{ flex:1 1 auto; }
+}
+
+/* ------------------------------------------
+   Zusätzliche Utilities (nicht-destruktiv)
+------------------------------------------ */
+@media (max-width:520px){
+  .stack-sm{ display:flex; flex-direction:column; gap:8px; }
+  .full-sm{ width:100% !important; }
+}
