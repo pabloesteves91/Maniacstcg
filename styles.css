@@ -233,16 +233,17 @@ dialog{
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;  /* <— vorher: center */
   align-items: center;
+  gap: 8px;                     /* <— steuert Abstand Label ↔ Value */
 
-  min-height: 120px; /* gleiche Höhe für alle */
+  min-height: 120px;            /* gleiche Kachelhöhe */
 }
 
 .kpi-label {
   color: var(--muted);
   font-size: 15px;
-  margin-bottom: 6px;
+  margin-bottom: 0;   /* <— vorher: 6px */
 }
 
 .kpi-value {
