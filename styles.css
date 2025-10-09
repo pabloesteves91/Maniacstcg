@@ -384,3 +384,21 @@ dialog{
 @media (min-width:1100px){
   #rotate-tip{ display:none !important; }
 }
+
+/* Last Matches Spaltenbreite */
+#latest-results th:nth-child(1),
+#latest-results td:nth-child(1) {
+  width: 30%; /* Player */
+}
+#latest-results th:nth-child(2),
+#latest-results td:nth-child(2) {
+  width: 20%; /* Deck */
+}
+#latest-results th:nth-child(3),
+#latest-results td:nth-child(3) {
+  width: 30%; /* Opponents Deck – jetzt weiter rechts */
+}
+#latest-results th:nth-child(4),
+#latest-results td:nth-child(4) {
+  width: 20%; /* Result */
+}
