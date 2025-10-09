@@ -130,12 +130,12 @@ if (window.__MANIACS_INIT__) {
 
   /* ------------------ Player Modal ------------------ */
   const playerModal = $('#player-modal');
-  function openPlayerModal(){
-    if(!currentUser) return alert('Bitte zuerst einloggen.');
-    if(!isAdminUI)   return alert('Nur Admins dürfen Players anlegen.');
-    try{ playerModal.showModal(); }
-    catch{ playerModal.setAttribute('open',''); }
-  }
+function openPlayerModal(){
+  if(!currentUser) return alert('Bitte zuerst einloggen.');
+  if(!isAdminUI)   return alert('Nur Admins dürfen Players anlegen.');
+  submitting.player = false; // Reset, falls vorher abgebrochen wurde
+  try { playerModal.showModal(); } catch { playerModal.setAttribute('open',''); }
+}
   $('#btn-open-player')?.addEventListener('click', openPlayerModal);
 
   // Submit-Debounce Flags
