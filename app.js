@@ -1,4 +1,13 @@
-// MANIACS · COMPETE — app.js (stable final + iOS select fix + overlay guards)
+// MANIACS · COMPETE — app.js (stable fix: overlay dismiss, <=520px, players cols, iOS select)
+// - Admin via rules-probe
+// - Init-guard
+// - Live re-render on admin change
+// - Submit debouncing
+// - Separate dashboard "Last Matches" render
+// - Fix players table columns (no decks cell)
+// - p-decks optional
+// - Overlay only on very small phones (<=520px) + dismiss
+
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
@@ -25,32 +34,41 @@ if (window.__MANIACS_INIT__) {
     const tip = document.getElementById('rotate-tip');
     if(!tip) return;
 
+    const DISMISS_KEY = 'maniacs_rotate_dismissed';
     const mqPortrait = window.matchMedia('(orientation: portrait)');
-    const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
+    // Nur sehr kleine Phones: <=520px (vorher 700px war zu aggressiv)
+    const mqTiny    = window.matchMedia('(max-width: 520px)');
 
-    const updateRotateTip = ()=>{
-      const show = mqSmall.matches && mqPortrait.matches;
+    function shouldShowOverlay(){
+      if (sessionStorage.getItem(DISMISS_KEY) === '1') return false;
+      return mqTiny.matches && mqPortrait.matches;
+    }
+
+    function updateRotateTip(){
+      const show = shouldShowOverlay();
       tip.classList.toggle('show', show);
-      // Wenn versteckt, sicherstellen, dass nichts blockiert (CSS: pointer-events:none; visibility:hidden)
-      if (!show) {
-        // defensive: TabIndex und aria-hidden setzen
-        tip.setAttribute('aria-hidden','true');
-      } else {
-        tip.removeAttribute('aria-hidden');
-      }
-    };
+      tip.setAttribute('aria-hidden', show ? 'false' : 'true');
+      // Wenn versteckt: nichts blockieren
+    }
+
+    // Dismiss-Button (Weiter)
+    const btn = tip.querySelector('#rotate-dismiss');
+    if (btn) {
+      btn.addEventListener('click', ()=>{
+        sessionStorage.setItem(DISMISS_KEY, '1');
+        updateRotateTip();
+      });
+    }
 
     updateRotateTip();
-    const onPortrait = ()=>setTimeout(updateRotateTip, 50);
-    const onSmall = ()=>setTimeout(updateRotateTip, 50);
-
-    if (mqPortrait.addEventListener) mqPortrait.addEventListener('change', onPortrait);
-    else mqPortrait.addListener && mqPortrait.addListener(onPortrait);
-    if (mqSmall.addEventListener) mqSmall.addEventListener('change', onSmall);
-    else mqSmall.addListener && mqSmall.addListener(onSmall);
+    const onChange = ()=>setTimeout(updateRotateTip, 60);
+    if (mqPortrait.addEventListener) mqPortrait.addEventListener('change', onChange);
+    else mqPortrait.addListener && mqPortrait.addListener(onChange);
+    if (mqTiny.addEventListener) mqTiny.addEventListener('change', onChange);
+    else mqTiny.addListener && mqTiny.addListener(onChange);
 
     window.addEventListener('resize', updateRotateTip, { passive:true });
-    window.addEventListener('orientationchange', ()=>setTimeout(updateRotateTip, 100), { passive:true });
+    window.addEventListener('orientationchange', ()=>setTimeout(updateRotateTip, 120), { passive:true });
     document.addEventListener('visibilitychange', updateRotateTip);
   })();
 
@@ -78,7 +96,7 @@ if (window.__MANIACS_INIT__) {
   let currentUser = null;
   let isAdminUI = false;
 
-  // Caches für sofortiges Re-Rendern
+  // Caches
   let cachePlayers = [];
   let cacheMatches = [];
   let cacheEvents  = [];
@@ -87,24 +105,22 @@ if (window.__MANIACS_INIT__) {
   async function checkAdminViaRulesProbe(user){
     if (!user) return false;
     try {
-      // Laut Rules dürfen nur Admins /meta/adminProbe lesen.
-      await getDoc(docRef('meta', 'adminProbe'));
-      return true; // Read erlaubt => Admin
+      await getDoc(docRef('meta', 'adminProbe')); // nur Admins dürfen das lesen
+      return true;
     } catch {
-      return false; // permission-denied => kein Admin
+      return false;
     }
   }
 
   function applyAdminUI(isAdmin){
     isAdminUI = isAdmin;
-    // Admin-spezifische UI
     $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
     $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
     $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
-    // 👑 Badge
     const badge = document.getElementById('role-badge');
     if (badge) badge.classList.toggle('hidden', !isAdmin);
-    // Re-render mit Caches, damit Delete-Buttons sofort korrekt sind
+
+    // Re-render mit Caches => Delete-Buttons sofort korrekt
     renderPlayers(cachePlayers);
     renderMatches(cacheMatches);
     renderEvents(cacheEvents);
@@ -127,25 +143,18 @@ if (window.__MANIACS_INIT__) {
   onUser(async (user)=>{
     currentUser = user || null;
 
-    // Header UI
     $('#user-info').textContent = user ? user.email : '';
     $('#btn-logout')?.classList.toggle('hidden', !user);
     $('#login-form')?.classList.toggle('hidden', !!user);
-
-    // Badge beim Ausloggen sicher verstecken (bis Admin bestimmt ist)
     document.getElementById('role-badge')?.classList.toggle('hidden', !user);
 
-    // Read-only Layout: linke Karten verstecken, rechte Karte mittig
     const isLoggedIn = !!user;
     document.body.classList.toggle('readonly', !isLoggedIn);
-
-    // Matches / Events Formular nur für Eingeloggte
     $('#matches-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#matches-list-card')?.classList.toggle('mx-center', !isLoggedIn);
     $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
-    // Admin nur über Rules bestimmen
     const admin = await checkAdminViaRulesProbe(user);
     applyAdminUI(admin);
   });
@@ -178,7 +187,10 @@ if (window.__MANIACS_INIT__) {
       btn?.setAttribute('disabled','disabled');
 
       const name=$('#p-name').value.trim();
-      const decks=$('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean);
+      // p-decks ist optional/nicht mehr vorhanden -> defensiv
+      const decksRaw = $('#p-decks')?.value || '';
+      const decks = decksRaw.split(',').map(s=>s.trim()).filter(Boolean);
+
       if(!name) return;
 
       await addDoc(col(C_PLAYERS), {name,wins:0,losses:0,draws:0,top8:0,decks});
@@ -209,7 +221,6 @@ if (window.__MANIACS_INIT__) {
             <td>${p.name}</td>
             <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
             <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-            <td>${(p.decks||[]).join(', ')}</td>
             <td>${p.top8||0}</td>
             <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
           </tr>`
@@ -220,16 +231,6 @@ if (window.__MANIACS_INIT__) {
       $('#kpi-players').textContent = docs.length;
       $('#kpi-wins').textContent = tw;
       $('#kpi-top8').textContent = t8;
-
-      // Team-Top8 Summary (Dashboard)
-      const teamSummaryEl = document.getElementById('team-summary');
-      if (teamSummaryEl) {
-        const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
-        const li = existing || document.createElement('li');
-        li.setAttribute('data-stat','top8');
-        li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
-        if (!existing) teamSummaryEl.appendChild(li);
-      }
 
       // Delete Buttons
       if (isAdminUI) {
@@ -244,43 +245,34 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-// Matches-Form: Player Dropdown (robust, iOS/Safari-freundlich)
-if (mPlayerSelect) {
-  const prev = mPlayerSelect.value; // vorherige Auswahl merken
+    // Matches-Form: Player Dropdown (robust, iOS/Safari-freundlich)
+    if (mPlayerSelect) {
+      const prev = mPlayerSelect.value; // vorherige Auswahl merken
+      let html = '<option value="">– Player wählen –</option>';
+      docs.forEach(d=>{
+        const p = d.data();
+        html += `<option value="${d.id}" data-name="${p.name}">${p.name}</option>`;
+      });
+      mPlayerSelect.innerHTML = html;
 
-  // Platzhalter NICHT disabled/hidden -> manche Browser blocken dann die Auswahl
-  let html = '<option value="">– Player wählen –</option>';
-  docs.forEach(d=>{
-    const p = d.data();
-    html += `<option value="${d.id}" data-name="${p.name}">${p.name}</option>`;
-  });
-  mPlayerSelect.innerHTML = html;
+      if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
+        mPlayerSelect.value = prev;
+      } else {
+        if (docs.length === 1) mPlayerSelect.value = docs[0].id;
+        else mPlayerSelect.value = "";
+      }
 
-  // Vorherige Auswahl wiederherstellen, falls möglich
-  if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
-    mPlayerSelect.value = prev;
-  } else {
-    // Wenn es genau 1 Spieler gibt: den direkt auswählen (Quality of life)
-    if (docs.length === 1) {
-      const only = docs[0];
-      mPlayerSelect.value = only.id;
-    } else {
-      mPlayerSelect.value = ""; // Platzhalter aktiv
+      // iOS/Safari: nach DOM-Update synchronisieren
+      setTimeout(()=>{
+        const sel = mPlayerSelect.options[mPlayerSelect.selectedIndex];
+        mPlayerSelect.dataset.selectedName = sel ? (sel.dataset.name || sel.textContent || "") : "";
+        mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
+      }, 0);
+
+      // Natives UI erzwingen
+      mPlayerSelect.style.webkitAppearance = 'menulist-button';
+      mPlayerSelect.style.appearance = 'menulist';
     }
-  }
-
-  // iOS/Safari: nach DOM-Update einen Tick warten, dann „syncen“
-  setTimeout(()=>{
-    // Fallback: Name aus Option-Text, falls selectedOptions leer liefert
-    const sel = mPlayerSelect.options[mPlayerSelect.selectedIndex];
-    mPlayerSelect.dataset.selectedName = sel ? (sel.dataset.name || sel.textContent || "") : "";
-    mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
-  }, 0);
-
-  // Sicherstellen, dass das Select „nativ“ rendert
-  mPlayerSelect.style.webkitAppearance = 'menulist-button';
-  mPlayerSelect.style.appearance = 'menulist';
-}
   }
 
   // Matches
@@ -357,7 +349,7 @@ if (mPlayerSelect) {
         });
       }
 
-      // Team summary on dashboard (W/L/D + Top-Deck), wenn vorhanden
+      // (optional) Dashboard Team Summary + Top-Deck, falls vorhanden
       const teamSummaryEl = document.getElementById('team-summary');
       const topDeckEl     = document.getElementById('top-deck-list');
       if (teamSummaryEl) {
@@ -483,7 +475,6 @@ if (mPlayerSelect) {
       if(m.deck) decksSet.add(String(m.deck).trim());
     });
     const pRef = docRef(C_PLAYERS, playerId);
-    // beibehaltene Felder holen und überschreiben
     const playersSnap = await getDocs(query(col(C_PLAYERS)));
     for (const d of playersSnap.docs) {
       if (d.id === playerId) {
@@ -502,16 +493,15 @@ if (mPlayerSelect) {
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
     const sel = $('#m-player');
-    const opt = $('#m-player')?.options[$('#m-player')?.selectedIndex || 0];
-const playerId   = opt?.value || "";
-const playerName = (opt?.dataset?.name || opt?.textContent || "").trim();
+    const opt = sel?.options[sel?.selectedIndex || 0];
+    const playerId   = opt?.value || "";
+    const playerName = (opt?.dataset?.name || opt?.textContent || "").trim();
 
-// Pflicht: Player muss gewählt sein
-if (!playerId) {
-  alert('Bitte zuerst einen Player wählen.');
-  $('#m-player')?.focus();
-  return;
-}
+    if (!playerId) {
+      alert('Bitte zuerst einen Player wählen.');
+      sel?.focus();
+      return;
+    }
 
     const m={
       date: $('#m-date').value || new Date().toISOString().slice(0,10),
@@ -528,9 +518,8 @@ if (!playerId) {
       await addDoc(col(C_MATCHES), m);
       if (playerId) await recomputePlayerStats(playerId);
       e.target.reset(); // auf dem Tab bleiben
-      // Platzhalter wieder setzen, damit iOS-Picker nicht "leere" Auswahl behält
       if (sel) {
-        sel.selectedIndex = 0;
+        sel.selectedIndex = 0; // Platzhalter
         sel.dispatchEvent(new Event('change', { bubbles:true }));
       }
     } finally {
