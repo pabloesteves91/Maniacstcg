@@ -104,11 +104,19 @@ onUser(async (user)=>{
 const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
 /* ------------------ Players ------------------ */
+// ---- Players: Modal sicher öffnen (wie am Anfang, ohne Owner-Check) ----
 const playerModal = $('#player-modal');
-$('#btn-open-player')?.addEventListener('click', ()=>{
+
+function openPlayerModal(){
   if(!currentUser) return alert('Bitte zuerst einloggen.');
-  if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players anlegen.');
-  if(playerModal?.showModal) playerModal.showModal(); else playerModal?.classList.remove('hidden');
+  try {
+    if (playerModal?.showModal) playerModal.showModal();
+    else playerModal?.setAttribute('open','');   // Fallback für ältere Browser
+  } catch {
+    playerModal?.setAttribute('open','');        // weiterer Fallback
+  }
+}
+$('#btn-open-player')?.addEventListener('click', openPlayerModal);
 });
 
 $('#player-form').addEventListener('submit', async (e)=>{
