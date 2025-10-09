@@ -1,5 +1,6 @@
 // app.js — MANIACS · COMPETE
-// Nur fabioberta@me.com darf Players & Sponsors anlegen/löschen.
+// Owner-only: Players & Sponsors nur fabioberta@me.com; Matches/Events für alle eingeloggten.
+// Enthält CSV-Export-Buttons für stats, players, matches, events, sponsors.
 
 import {
   auth, loginEmail, logout, onUser,
@@ -16,6 +17,31 @@ function setActiveTab(id){
 }
 $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
+const OWNER_EMAIL = "fabioberta@me.com";
+
+// ---------- CSV Helpers ----------
+function csvEscape(v){
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function toCSV(rows, headerOrder){
+  const bom = '\uFEFF'; // Excel-friendly
+  const headers = headerOrder || Object.keys(rows[0] || {});
+  const head = headers.map(csvEscape).join(';');
+  const body = rows.map(r => headers.map(h => csvEscape(r[h])).join(';')).join('\n');
+  return bom + head + '\n' + body;
+}
+function downloadCSV(filename, rows, headerOrder){
+  const csv = toCSV(rows, headerOrder);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+
 // ---------- Auth ----------
 $('#login-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -31,11 +57,13 @@ $('#login-form').addEventListener('submit', async (e)=>{
 $('#btn-logout').addEventListener('click', logout);
 
 let currentUser = null;
-const OWNER_EMAIL = "fabioberta@me.com";
 
-// Sichtbarkeit zu Beginn (bis onUser feuert)
+// Start: Schreib-Formulare verstecken bis Auth geklärt
 $('#btn-open-player')?.classList.add('hidden');
 $('#sponsor-form')?.classList.add('hidden');
+['match-form','event-form','sponsor-form','player-form'].forEach(id=>{
+  document.getElementById(id)?.classList.add('hidden');
+});
 
 onUser(async (user)=>{
   currentUser = user || null;
@@ -45,10 +73,16 @@ onUser(async (user)=>{
   $('#btn-logout').classList.toggle('hidden', !user);
   $('#login-form').classList.toggle('hidden', !!user);
 
-  // Nur Fabio sieht "+ Player" und Sponsor-Formular
-  const canEdit = !!(user && user.email === OWNER_EMAIL);
-  $('#btn-open-player')?.classList.toggle('hidden', !canEdit);
-  $('#sponsor-form')?.classList.toggle('hidden', !canEdit);
+  // Sichtbarkeit Schreib-Formulare
+  const isLoggedIn = !!user;
+  ['match-form','event-form'].forEach(id=>{
+    document.getElementById(id)?.classList.toggle('hidden', !isLoggedIn);
+  });
+
+  // Nur Fabio sieht Player-Button & Sponsor-Form
+  const isOwner = !!(user && user.email === OWNER_EMAIL);
+  $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
+  $('#sponsor-form')?.classList.toggle('hidden', !isOwner);
 });
 
 // ---------- Collections ----------
@@ -217,4 +251,90 @@ onSnapshot(col(C_SPONS), (snap)=>{
     if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Sponsoren löschen.');
     await deleteDoc(docRef(C_SPONS, b.dataset.delS));
   }));
+});
+
+// ---------- CSV Exports ----------
+document.getElementById('export-players')?.addEventListener('click', async ()=>{
+  const snap = await getDocs(query(col(C_PLAYERS), orderBy('name')));
+  const rows = [];
+  snap.forEach(d=>{
+    const p = { id:d.id, ...d.data() };
+    const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
+    const winpct = g ? Math.round((p.wins||0)/g*100) : 0;
+    rows.push({
+      name: p.name || '',
+      wins: p.wins||0,
+      losses: p.losses||0,
+      draws: p.draws||0,
+      win_pct: winpct,
+      top8: p.top8||0,
+      decks: (p.decks||[]).join(', ')
+    });
+  });
+  downloadCSV('players.csv', rows, ['name','wins','losses','draws','win_pct','top8','decks']);
+});
+
+document.getElementById('export-matches')?.addEventListener('click', async ()=>{
+  const snap = await getDocs(query(col(C_MATCHES), orderBy('date','desc')));
+  const rows = [];
+  snap.forEach(d=>{
+    const m = d.data();
+    rows.push({
+      date: m.date||'',
+      player: m.player||'',
+      playerId: m.playerId||'',
+      deck: m.deck||'',
+      opponent: m.opp||'',
+      result: m.res||'',
+      event: m.event||''
+    });
+  });
+  downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','event']);
+});
+
+document.getElementById('export-events')?.addEventListener('click', async ()=>{
+  const snap = await getDocs(query(col(C_EVENTS), orderBy('date','asc')));
+  const rows = [];
+  snap.forEach(d=>{
+    const e = d.data();
+    rows.push({
+      date: e.date||'',
+      name: e.name||'',
+      location: e.loc||'',
+      type: e.type||''
+    });
+  });
+  downloadCSV('events.csv', rows, ['date','name','location','type']);
+});
+
+document.getElementById('export-sponsors')?.addEventListener('click', async ()=>{
+  const snap = await getDocs(col(C_SPONS));
+  const rows = [];
+  snap.forEach(d=>{
+    const s = d.data();
+    const host = s.url ? new URL(s.url).host : '';
+    rows.push({
+      name: s.name||'',
+      url: s.url||'',
+      host
+    });
+  });
+  downloadCSV('sponsors.csv', rows, ['name','url','host']);
+});
+
+document.getElementById('export-stats')?.addEventListener('click', async ()=>{
+  const ps = await getDocs(col(C_PLAYERS));
+  const players = []; ps.forEach(d=>players.push({id:d.id, ...d.data()}));
+  const total_players = players.length;
+  const total_wins = players.reduce((a,p)=>a+(p.wins||0),0);
+  const total_top8 = players.reduce((a,p)=>a+(p.top8||0),0);
+  const generated_at = new Date().toISOString();
+
+  const rows = [
+    { metric:'total_players', value: total_players },
+    { metric:'total_wins',    value: total_wins },
+    { metric:'total_top8',    value: total_top8 },
+    { metric:'generated_at',  value: generated_at }
+  ];
+  downloadCSV('stats.csv', rows, ['metric','value']);
 });
