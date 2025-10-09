@@ -435,3 +435,30 @@ dialog{
   .stack-sm{ display:flex; flex-direction:column; gap:8px; }
   .full-sm{ width:100% !important; }
 }
+
+/* Rotate-Tip: nur mobil, additive */
+#rotate-tip{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  display: none;                /* per JS ein/aus */
+  background: rgba(0,0,0,.85);
+  color: #fff;
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+#rotate-tip .inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex; gap: 10px; align-items: center; justify-content: center;
+  text-align: center;
+  font-size: 14px;
+}
+#rotate-tip svg{ flex: 0 0 auto; }
+#rotate-tip.show{ display: block; }
+
+/* Desktop-Schutz */
+@media (min-width:1100px){
+  #rotate-tip{ display: none !important; }
+}
