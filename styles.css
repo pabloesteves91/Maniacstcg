@@ -402,3 +402,74 @@ dialog{
 #latest-results td:nth-child(4) {
   width: 20%; /* Result */
 }
+
+/* --- Modal: Layout & Typografie --- */
+dialog.sheet{
+  width:min(560px,92vw);
+  padding:0;                     /* Inhalt steuert Abstände */
+  border:none;
+  border-radius:22px;
+  background:var(--card);
+  color:var(--txt);
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.modal-form{
+  display:flex; flex-direction:column; gap:16px;
+  padding:18px;
+}
+.modal-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 6px 14px 6px;
+  border-bottom:1px solid var(--line);
+}
+.modal-head h3{
+  margin:0; font-size:22px; font-weight:800; letter-spacing:.3px;
+}
+.icon-btn.close{
+  background:transparent; border:1px solid rgba(255,255,255,.18);
+  width:36px; height:36px; border-radius:10px; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center;
+  color:#fff; cursor:pointer;
+}
+.icon-btn.close:hover{ border-color:rgba(255,255,255,.28); }
+
+/* --- Feldgruppe --- */
+.form-field{ display:flex; flex-direction:column; gap:8px; }
+.form-field label{
+  font-weight:700; color:var(--muted); letter-spacing:.2px;
+}
+#player-modal input{
+  width:100%;
+  background:#0d111a;
+  border:1px solid rgba(255,255,255,.14);
+  color:var(--txt);
+  border-radius:14px;
+  padding:12px 14px;
+  min-height:48px;
+  font-size:16px;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+#player-modal input::placeholder{ color:#8a93a6; }
+
+/* Ruhiger Focus-Ring in Brand-Farbe, ohne „glühen“ */
+#player-modal input:focus{
+  outline:none;
+  border-color:rgba(227,6,19,.55);
+  box-shadow:0 0 0 3px rgba(227,6,19,.18);
+}
+
+/* --- Actions unten: klare Trennung und gleicher Button-Abstand --- */
+.modal-actions{
+  display:flex; justify-content:flex-end; gap:10px;
+  padding-top:14px; margin-top:6px;
+  border-top:1px solid var(--line-soft);
+}
+.modal-actions .btn{ min-width:110px; border-radius:12px; }
+
+/* Dark-Ghost-Button etwas präsenter */
+.modal-actions .btn.ghost{
+  border:1px solid rgba(255,255,255,.24);
+}
+.modal-actions .btn.ghost:hover{
+  border-color:rgba(255,255,255,.34);
+}
