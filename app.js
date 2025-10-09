@@ -1,5 +1,5 @@
-// MANIACS · COMPETE — app.js (final)
-// Login, CRUD, CSV-Export, Charts, Readonly-Layout, Owner-only Writes/Deletes
+// MANIACS · COMPETE — app.js (final, text-based team stats)
+// Login, CRUD, CSV-Export, Readonly-Layout, Owner-only Writes/Deletes
 
 import {
   loginEmail, logout, onUser,
@@ -32,26 +32,6 @@ function downloadCSV(filename, rows, order){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=filename;
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
-
-/* ---------- Tiny chart (canvas bars) ---------- */
-function drawBars(canvas, labels, values, title){
-  const el = typeof canvas==='string' ? document.getElementById(canvas) : canvas;
-  if(!el) return;
-  const ctx = el.getContext('2d');
-  const W = el.width  = el.clientWidth || 520;
-  const H = el.height = el.getAttribute('height')|0 || 220;
-  ctx.clearRect(0,0,W,H);
-  const pad=28, max=Math.max(1,...values); const n=values.length||1; const bw=Math.max(10,(W-pad*2)/(n*1.25)); const gap=bw*0.25;
-  ctx.fillStyle='#9aa3b2'; ctx.font='12px system-ui'; ctx.fillText(title||'',8,16);
-  ctx.strokeStyle='#252a36'; ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-  values.forEach((v,i)=>{
-    const x=pad+i*(bw+gap)+gap; const h=Math.round((H-pad*2)*(v/max)); const y=H-pad-h;
-    ctx.fillStyle='#E30613'; ctx.fillRect(x,y,bw,h);
-    ctx.fillStyle='#9aa3b2'; ctx.font='11px system-ui';
-    const lab=(labels[i]||'').slice(0,8); const tw=ctx.measureText(lab).width; ctx.fillText(lab,x+bw/2-tw/2,H-6);
-    const txt=String(v); const tv=ctx.measureText(txt).width; ctx.fillText(txt,x+bw/2-tv/2,y-4);
-  });
 }
 
 /* ------------------ Auth ------------------ */
@@ -100,7 +80,6 @@ const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='spon
 const playerModal = $('#player-modal');
 function openPlayerModal(){
   if(!currentUser) return alert('Bitte zuerst einloggen.');
-  // Öffnen immer erlauben (wie am Anfang); Schreiben bleibt owner-only
   try{ playerModal.showModal(); }
   catch{ playerModal.setAttribute('open',''); } // Fallback
 }
@@ -117,6 +96,10 @@ $('#player-form').addEventListener('submit', async (e)=>{
   e.target.reset();
   playerModal.close?.();
 });
+
+/* ------------------ Team Stats Targets (text) ------------------ */
+const teamSummaryEl = document.getElementById('team-summary');   // UL
+const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
 /* ------------------ Players ------------------ */
 let _playersCache=[]; let _deckCounts={};
@@ -150,21 +133,20 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   $('#kpi-wins').textContent = tw;
   $('#kpi-top8').textContent = t8;
 
+  // Team-Top8 in Summary synchronisieren (W/L/D kommt aus Matches)
+  if (teamSummaryEl) {
+    const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
+    const li = existing || document.createElement('li');
+    li.setAttribute('data-stat','top8');
+    li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
+    if (!existing) teamSummaryEl.appendChild(li);
+  }
+
   $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
     if(!currentUser) return;
     if(currentUser.email !== OWNER_EMAIL) return;
     await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
   }));
-
-  // Charts
-  try{
-    const labels=_playersCache.map(p=>p.name);
-    const values=_playersCache.map(p=>{const g=(p.wins||0)+(p.losses||0)+(p.draws||0); return g?Math.round((p.wins||0)/g*100):0;});
-    drawBars('chart-winrates', labels, values, 'Winrate % / Player');
-    const deckLabels=Object.keys(_deckCounts).sort((a,b)=>_deckCounts[b]-_deckCounts[a]).slice(0,10);
-    const deckVals=deckLabels.map(k=>_deckCounts[k]);
-    drawBars('chart-decks', deckLabels, deckVals, 'Decks (Anzahl Spieler)');
-  }catch(e){}
 });
 
 /* ------------------ Matches ------------------ */
@@ -213,10 +195,17 @@ $('#match-form').addEventListener('submit', async (e)=>{
 });
 
 const matchesTBody=$('#matches-table tbody'); const latestTBody=$('#latest-results tbody');
+
 onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   const rows=[], latest=[];
+  // --- Aggregate für Team-Stats ---
+  let teamW = 0, teamL = 0, teamD = 0;
+  const deckWinCounts = {}; // deck -> wins
+
   snap.forEach(d=>{
     const m=d.data();
+
+    // Tabelle
     rows.push(`
       <tr>
         <td>${m.date||''}</td>
@@ -228,16 +217,65 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
         <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-match="${d.id}">Löschen</button>` : ''}</td>
       </tr>
     `);
+
     if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
+
+    // Aggregation
+    if (m.res === 'W') teamW++;
+    else if (m.res === 'L') teamL++;
+    else if (m.res === 'D') teamD++;
+
+    if (m.res === 'W' && m.deck) {
+      const key = m.deck.trim();
+      if (key) deckWinCounts[key] = (deckWinCounts[key] || 0) + 1;
+    }
   });
+
   matchesTBody.innerHTML = rows.join('');
   latestTBody.innerHTML  = latest.join('');
 
+  // Delete-Listener
   $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!currentUser) return;
     if(currentUser.email !== OWNER_EMAIL) return;
     await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
   }));
+
+  // --- Team Summary rendern (W/L/D + Top8 aus Players) ---
+  if (teamSummaryEl) {
+    // Team Record
+    const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
+    const wlLi = wlExisting || document.createElement('li');
+    wlLi.setAttribute('data-stat','wld');
+    wlLi.innerHTML = `<strong>Team Record</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
+    if (!wlExisting) teamSummaryEl.appendChild(wlLi);
+
+    // Sicherstellen, dass Top8-Zeile existiert (Players-Snapshot setzt sie normalerweise)
+    if (!teamSummaryEl.querySelector('[data-stat="top8"]')) {
+      const top8Li = document.createElement('li');
+      top8Li.setAttribute('data-stat','top8');
+      top8Li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${$('#kpi-top8').textContent}`;
+      teamSummaryEl.appendChild(top8Li);
+    }
+  }
+
+  // --- Top Deck (Wins) rendern ---
+  if (topDeckEl) {
+    topDeckEl.innerHTML = '';
+    const decks = Object.keys(deckWinCounts);
+    if (decks.length) {
+      decks.sort((a,b)=>deckWinCounts[b]-deckWinCounts[a]);
+      const best = decks[0];
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${best}</strong><span class="grow"></span>${deckWinCounts[best]} Wins`;
+      topDeckEl.appendChild(li);
+    } else {
+      const li = document.createElement('li');
+      li.className = 'muted';
+      li.textContent = 'Noch keine Siege erfasst.';
+      topDeckEl.appendChild(li);
+    }
+  }
 });
 
 /* ------------------ Events ------------------ */
