@@ -247,14 +247,23 @@
   </section>
 </main>
 
-<dialog id="player-modal" aria-labelledby="player-modal-title">
-  <form id="player-form" method="dialog" class="modal" aria-label="Player anlegen">
-    <h3 id="player-modal-title">New Player</h3>
-    <input id="p-name" type="text" placeholder="Name" required aria-label="Name" />
-    <div class="row end gap-8">
+<dialog id="player-modal" class="sheet" aria-labelledby="player-modal-title">
+  <form id="player-form" method="dialog" class="modal-form" aria-label="Player anlegen">
+    <header class="modal-head">
+      <h3 id="player-modal-title">New Player</h3>
+      <button type="button" class="icon-btn close" aria-label="Close"
+              onclick="this.closest('dialog').close()">✕</button>
+    </header>
+
+    <div class="form-field">
+      <label for="p-name">Name</label>
+      <input id="p-name" type="text" placeholder="z. B. Max Meier" required />
+    </div>
+
+    <footer class="modal-actions">
       <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
       <button class="btn" type="submit">Save</button>
-    </div>
+    </footer>
   </form>
 </dialog>
 
