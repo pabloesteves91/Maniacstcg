@@ -14,18 +14,16 @@
   <script type="module" src="firebase.js?v=2"></script>
   <script type="module" src="app.js?v=13"></script>
 </head>
-<body>
-  
-  <!-- ADD: zentrierter Rotate-Banner -->
+<!-- ADD: zentrierter Rotate-Banner -->
 <div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
   <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
     <div class="rotate-icon" aria-hidden="true">↻</div>
     <div class="rotate-text">
       Für bessere Übersicht bitte <strong>quer drehen</strong>.
     </div>
-    <!-- ADD --> <button id="rotate-dismiss" class="btn ghost" type="button" aria-label="Weiter ohne Drehen">Weiter</button>
   </div>
 </div>
+<body>
 <header class="app-header">
   <div class="container row between center wrap">
     <div class="row center gap-12">
@@ -70,6 +68,10 @@
           <div class="kpi-label">Wins Total</div>
           <div class="kpi-value" id="kpi-wins">0</div>
         </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Top 8</div>
+          <div class="kpi-value" id="kpi-top8">0</div>
+        </div>
       </div>
       <div class="row end" style="margin-top:16px;">
         <button class="btn ghost" id="export-stats">Export Stats (CSV)</button>
@@ -85,7 +87,7 @@
             <tr>
               <th scope="col">Player</th>
               <th scope="col">Deck</th>
-              <th scope="col">Opponents Deck</th>
+              <th scope="col">Opponent</th>
               <th scope="col">Result</th>
             </tr>
           </thead>
@@ -110,6 +112,7 @@
               <th scope="col">Name</th>
               <th scope="col">Record</th>
               <th scope="col">Win %</th>
+              <th scope="col">Decks</th>
               <th scope="col">Top 8</th>
               <th scope="col"></th>
             </tr>
@@ -133,7 +136,7 @@
           <select id="m-player" aria-label="Player auswählen"></select>
 
           <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck" />
-          <input type="text" id="m-opp" placeholder="Opponents Deck" aria-label="Gegner" />
+          <input type="text" id="m-opp" placeholder="Opponent" aria-label="Gegner" />
 
           <!-- Match-Ergebnis -->
           <select id="m-res" aria-label="Ergebnis">
@@ -173,7 +176,7 @@
                 <th scope="col">Date</th>
                 <th scope="col">Player</th>
                 <th scope="col">Deck</th>
-                <th scope="col">Opponents Deck</th>
+                <th scope="col">Opponent</th>
                 <th scope="col">Result</th>
                 <th scope="col">Event</th>
                 <th scope="col"></th>
@@ -252,6 +255,7 @@
   <form id="player-form" method="dialog" class="modal" aria-label="Player anlegen">
     <h3 id="player-modal-title">new Player</h3>
     <input id="p-name" type="text" placeholder="Name" required aria-label="Name" />
+    <input id="p-decks" type="text" placeholder="Decks (kommagetrennt)" aria-label="Decks" />
     <div class="row end gap-8">
       <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
       <button class="btn" type="submit">Save</button>
