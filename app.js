@@ -1,5 +1,4 @@
 // MANIACS · COMPETE — app.js (final, admin via rules-probe, init-guard, debounce)
-
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
@@ -34,13 +33,16 @@ if (window.__MANIACS_INIT__) {
       tip.classList.toggle('show', show);
     }
 
-    // initial + live updates
     updateRotateTip();
-    mqPortrait.addEventListener?.('change', updateRotateTip);
-    mqSmall.addEventListener?.('change', updateRotateTip);
-    window.addEventListener('resize', updateRotateTip, { passive: true });
+    const onPortrait = ()=>updateRotateTip();
+    const onSmall = ()=>updateRotateTip();
+    if (mqPortrait.addEventListener) mqPortrait.addEventListener('change', onPortrait);
+    else mqPortrait.addListener && mqPortrait.addListener(onPortrait);
+    if (mqSmall.addEventListener) mqSmall.addEventListener('change', onSmall);
+    else mqSmall.addListener && mqSmall.addListener(onSmall);
+    window.addEventListener('resize', updateRotateTip, { passive:true });
   })();
-}
+
   // CSV helpers
   function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
   function toCSV(rows, order){
