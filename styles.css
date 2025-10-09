@@ -258,6 +258,16 @@ dialog{
   .kpi-value{ font-size:28px; }
 }
 
+.kpi-box .kpi-label {
+  color: #888; /* grau */
+  font-size: 0.9rem;
+}
+
+.kpi-box .kpi-value.streak {
+  color: #e33;   /* rot */
+  font-size: 1.2rem; /* gleiche Größe wie andere Werte */
+}
+
 /* Titel im Header etwas größer und markanter */
 .app-header .app-title {
   font-size: 24px;         /* vorher 20px */
