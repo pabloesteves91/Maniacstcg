@@ -141,29 +141,42 @@ if (window.__MANIACS_INIT__) {
   // Submit-Debounce Flags
   const submitting = { player:false, match:false };
 
-  $('#player-form')?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    if(submitting.player) return;
-    if(!currentUser) return alert('Login erforderlich.');
-    if(!isAdminUI)   return alert('Nur Admins dürfen Players speichern.');
+$('#player-form')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if (submitting.player) return;
 
-    const btn = e.submitter || $('#player-form button[type="submit"]');
-    try{
-      submitting.player = true;
-      btn?.setAttribute('disabled','disabled');
+  if (!currentUser) { alert('Login erforderlich.'); return; }
+  if (!isAdminUI)   { alert('Nur Admins dürfen Players speichern.'); return; }
 
-      const name=$('#p-name').value.trim();
-      const decks=$('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean);
-      if(!name) return;
+  const name  = $('#p-name').value.trim();
+  const decks = $('#p-decks') ? $('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean) : [];
 
-      await addDoc(col(C_PLAYERS), {name,wins:0,losses:0,draws:0,top8:0,decks});
-      e.target.reset();
-      playerModal.close?.();
-    } finally {
-      submitting.player = false;
-      btn?.removeAttribute('disabled');
-    }
-  });
+  if (!name) {
+    // sanfte UX: Feld markieren & Fokus, aber nicht „hängen bleiben“
+    const el = $('#p-name');
+    el?.focus();
+    el?.setAttribute('aria-invalid','true');
+    return;
+  }
+
+  const btn = e.submitter || $('#player-form button[type="submit"]');
+
+  submitting.player = true;
+  btn?.setAttribute('disabled','disabled');
+
+  try {
+    await addDoc(col(C_PLAYERS), { name, wins:0, losses:0, draws:0, top8:0, decks });
+    e.target.reset();
+    // evtl. aria-invalid zurücksetzen
+    $('#p-name')?.removeAttribute('aria-invalid');
+    playerModal?.close?.();
+  } catch (err) {
+    alert('Fehler beim Speichern: ' + (err?.message || err));
+  } finally {
+    submitting.player = false;
+    btn?.removeAttribute('disabled');
+  }
+});
 
   /* ------------------ Team Summary (Text) ------------------ */
   const teamSummaryEl = document.getElementById('team-summary');   // UL
