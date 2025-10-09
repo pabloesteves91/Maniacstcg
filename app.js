@@ -1,14 +1,12 @@
 // app.js — MANIACS · COMPETE
-// Owner-only: Players & Sponsors nur fabioberta@me.com; Matches/Events für alle eingeloggten.
-// Enthält CSV-Export-Buttons für stats, players, matches, events, sponsors.
-
+// Funktionen: Login, CRUD, CSV-Exports, Charts, Owner-only-Write
 import {
   auth, loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
   query, orderBy, deleteDoc
 } from './firebase.js';
 
-// ---------- Helpers ----------
+// ---------- Basic DOM Helpers ----------
 const $  = (sel)=>document.querySelector(sel);
 const $$ = (sel)=>[...document.querySelectorAll(sel)];
 function setActiveTab(id){
@@ -42,6 +40,38 @@ function downloadCSV(filename, rows, headerOrder){
   a.remove(); URL.revokeObjectURL(url);
 }
 
+// ---------- Chart Helper ----------
+function drawBars(canvas, labels, values, title){
+  const el = typeof canvas==='string' ? document.getElementById(canvas) : canvas;
+  if(!el) return;
+  const ctx = el.getContext('2d');
+  const W = el.width  = el.clientWidth || 520;
+  const H = el.height = el.getAttribute('height')|0 || 220;
+  ctx.clearRect(0,0,W,H);
+  const pad = 28, max = Math.max(1, ...values);
+  const n = values.length || 1;
+  const bw = Math.max(10, (W - pad*2) / (n*1.25));
+  const gap = bw*0.25;
+  ctx.fillStyle = '#9aa3b2'; ctx.font = '12px system-ui';
+  ctx.fillText(title||'', 8, 16);
+  ctx.strokeStyle = '#252a36'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, H-pad); ctx.lineTo(W-pad, H-pad); ctx.stroke();
+  values.forEach((v,i)=>{
+    const x = pad + i*(bw+gap) + gap;
+    const h = Math.round((H - pad*2) * (v/max));
+    const y = H - pad - h;
+    ctx.fillStyle = '#E30613';
+    ctx.fillRect(x, y, bw, h);
+    ctx.fillStyle = '#9aa3b2'; ctx.font='11px system-ui';
+    const lab = (labels[i]||'').slice(0,8);
+    const tw = ctx.measureText(lab).width;
+    ctx.fillText(lab, x + bw/2 - tw/2, H - 6);
+    const txt = String(v);
+    const tv = ctx.measureText(txt).width;
+    ctx.fillText(txt, x + bw/2 - tv/2, y - 4);
+  });
+}
+
 // ---------- Auth ----------
 $('#login-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -57,8 +87,6 @@ $('#login-form').addEventListener('submit', async (e)=>{
 $('#btn-logout').addEventListener('click', logout);
 
 let currentUser = null;
-
-// Start: Schreib-Formulare verstecken bis Auth geklärt
 $('#btn-open-player')?.classList.add('hidden');
 $('#sponsor-form')?.classList.add('hidden');
 ['match-form','event-form','sponsor-form','player-form'].forEach(id=>{
@@ -67,19 +95,13 @@ $('#sponsor-form')?.classList.add('hidden');
 
 onUser(async (user)=>{
   currentUser = user || null;
-
-  // UI: Login/Logout
   $('#user-info').textContent = user ? user.email : '';
   $('#btn-logout').classList.toggle('hidden', !user);
   $('#login-form').classList.toggle('hidden', !!user);
-
-  // Sichtbarkeit Schreib-Formulare
   const isLoggedIn = !!user;
   ['match-form','event-form'].forEach(id=>{
     document.getElementById(id)?.classList.toggle('hidden', !isLoggedIn);
   });
-
-  // Nur Fabio sieht Player-Button & Sponsor-Form
   const isOwner = !!(user && user.email === OWNER_EMAIL);
   $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
   $('#sponsor-form')?.classList.toggle('hidden', !isOwner);
@@ -90,13 +112,11 @@ const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='spon
 
 // ---------- Players ----------
 const playerModal = $('#player-modal');
-
 $('#btn-open-player')?.addEventListener('click', ()=>{
   if(!currentUser) return alert('Bitte zuerst einloggen.');
   if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players anlegen.');
   playerModal.showModal();
 });
-
 $('#player-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -109,12 +129,15 @@ $('#player-form').addEventListener('submit', async (e)=>{
   playerModal.close();
 });
 
+let _playersCache = [];
+let _deckCounts = {};
 const playersTBody = $('#players-table tbody');
 const mPlayerSelect = $('#m-player');
 
 onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   const rows=[], opts=[];
   let tw=0, t8=0;
+  _playersCache=[]; _deckCounts={};
   snap.forEach(d=>{
     const p={id:d.id,...d.data()};
     const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
@@ -131,18 +154,35 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
     );
     opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
     tw+=(p.wins||0); t8+=(p.top8||0);
+    _playersCache.push(p);
+    (p.decks||[]).forEach(name=>{
+      if(!name) return; const k=name.trim();
+      _deckCounts[k] = (_deckCounts[k]||0)+1;
+    });
   });
   playersTBody.innerHTML = rows.join('');
   mPlayerSelect.innerHTML = opts.join('');
   $('#kpi-players').textContent = snap.size;
   $('#kpi-wins').textContent = tw;
   $('#kpi-top8').textContent = t8;
-
   $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
     if(!currentUser) return alert('Login erforderlich.');
     if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players löschen.');
     await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
   }));
+
+  // Charts rendern
+  try{
+    const labels = _playersCache.map(p=>p.name);
+    const values = _playersCache.map(p=>{
+      const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
+      return g ? Math.round((p.wins||0)/g*100) : 0;
+    });
+    drawBars('chart-winrates', labels, values, 'Winrate % / Player');
+    const deckLabels = Object.keys(_deckCounts).sort((a,b)=>_deckCounts[b]-_deckCounts[a]).slice(0,10);
+    const deckVals   = deckLabels.map(k=>_deckCounts[k]);
+    drawBars('chart-decks', deckLabels, deckVals, 'Decks (Anzahl Spieler)');
+  }catch(e){}
 });
 
 // ---------- Matches ----------
@@ -162,7 +202,6 @@ $('#match-form').addEventListener('submit', async (e)=>{
     event: $('#m-event').value.trim()
   };
   await addDoc(col(C_MATCHES), m);
-
   if(playerId){
     const all = await getDocs(query(col(C_PLAYERS)));
     all.forEach(async d=>{
@@ -181,7 +220,6 @@ $('#match-form').addEventListener('submit', async (e)=>{
 
 const matchesTBody = $('#matches-table tbody');
 const latestTBody  = $('#latest-results tbody');
-
 onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   const rows=[], latest=[];
   snap.forEach(d=>{
@@ -206,18 +244,14 @@ $('#event-form').addEventListener('submit', async (e)=>{
   await addDoc(col(C_EVENTS), ev);
   e.target.reset();
 });
-
 const eventsBody = $('#events-table tbody');
-const eventsMini = $('#events-mini tbody');
 onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
-  const rows=[], mini=[]; let i=0;
+  const rows=[];
   snap.forEach(d=>{
     const e=d.data();
     rows.push(`<tr><td>${e.date}</td><td>${e.name}</td><td>${e.loc}</td><td>${e.type}</td></tr>`);
-    if(i<5){ mini.push(`<tr><td>${e.date}</td><td>${e.name}</td><td>${e.loc}</td></tr>`); i++; }
   });
   eventsBody.innerHTML = rows.join('');
-  eventsMini.innerHTML = mini.join('');
 });
 
 // ---------- Sponsors ----------
@@ -229,7 +263,6 @@ $('#sponsor-form').addEventListener('submit', async (e)=>{
   await addDoc(col(C_SPONS), s);
   e.target.reset();
 });
-
 const sponsList = $('#sponsor-list');
 onSnapshot(col(C_SPONS), (snap)=>{
   const items=[];
@@ -254,7 +287,7 @@ onSnapshot(col(C_SPONS), (snap)=>{
 });
 
 // ---------- CSV Exports ----------
-document.getElementById('export-players')?.addEventListener('click', async ()=>{
+$('#export-players')?.addEventListener('click', async ()=>{
   const snap = await getDocs(query(col(C_PLAYERS), orderBy('name')));
   const rows = [];
   snap.forEach(d=>{
@@ -273,8 +306,7 @@ document.getElementById('export-players')?.addEventListener('click', async ()=>{
   });
   downloadCSV('players.csv', rows, ['name','wins','losses','draws','win_pct','top8','decks']);
 });
-
-document.getElementById('export-matches')?.addEventListener('click', async ()=>{
+$('#export-matches')?.addEventListener('click', async ()=>{
   const snap = await getDocs(query(col(C_MATCHES), orderBy('date','desc')));
   const rows = [];
   snap.forEach(d=>{
@@ -291,45 +323,32 @@ document.getElementById('export-matches')?.addEventListener('click', async ()=>{
   });
   downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','event']);
 });
-
-document.getElementById('export-events')?.addEventListener('click', async ()=>{
+$('#export-events')?.addEventListener('click', async ()=>{
   const snap = await getDocs(query(col(C_EVENTS), orderBy('date','asc')));
   const rows = [];
   snap.forEach(d=>{
     const e = d.data();
-    rows.push({
-      date: e.date||'',
-      name: e.name||'',
-      location: e.loc||'',
-      type: e.type||''
-    });
+    rows.push({ date: e.date||'', name: e.name||'', location: e.loc||'', type: e.type||'' });
   });
   downloadCSV('events.csv', rows, ['date','name','location','type']);
 });
-
-document.getElementById('export-sponsors')?.addEventListener('click', async ()=>{
+$('#export-sponsors')?.addEventListener('click', async ()=>{
   const snap = await getDocs(col(C_SPONS));
   const rows = [];
   snap.forEach(d=>{
     const s = d.data();
     const host = s.url ? new URL(s.url).host : '';
-    rows.push({
-      name: s.name||'',
-      url: s.url||'',
-      host
-    });
+    rows.push({ name: s.name||'', url: s.url||'', host });
   });
   downloadCSV('sponsors.csv', rows, ['name','url','host']);
 });
-
-document.getElementById('export-stats')?.addEventListener('click', async ()=>{
+$('#export-stats')?.addEventListener('click', async ()=>{
   const ps = await getDocs(col(C_PLAYERS));
   const players = []; ps.forEach(d=>players.push({id:d.id, ...d.data()}));
   const total_players = players.length;
   const total_wins = players.reduce((a,p)=>a+(p.wins||0),0);
   const total_top8 = players.reduce((a,p)=>a+(p.top8||0),0);
   const generated_at = new Date().toISOString();
-
   const rows = [
     { metric:'total_players', value: total_players },
     { metric:'total_wins',    value: total_wins },
