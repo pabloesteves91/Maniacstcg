@@ -9,24 +9,14 @@
   <script type="module" src="firebase.js?v=2"></script>
   <script type="module" src="app.js?v=13"></script>
 </head>
-<!-- ADD: Rotate portrait tip -->
-<div id="rotate-tip" role="status" aria-live="polite" aria-atomic="true">
-  <div class="inner">
-    <!-- simple rotate icon -->
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-      <path d="M7 2h10a2 2 0 0 1 2 2v8h-2V4H7v3L3 3l4-4v3zM5 12h2v8h10v-3l4 4-4 4v-3H5a2 2 0 0 1-2-2v-8z"/>
-    </svg>
-    <span>Für bessere Übersicht bitte <strong>quer drehen</strong>.</span>
+<!-- ADD: zentrierter Rotate-Banner -->
+<div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
+  <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
+    <div class="rotate-icon" aria-hidden="true">↻</div>
+    <div class="rotate-text">
+      Für bessere Übersicht bitte <strong>quer drehen</strong>.
+    </div>
   </div>
-</div>
-<!-- ADD: schlanker Rotate-Banner oben -->
-<div id="rotate-tip" class="rotate-tip-bar" role="status" aria-live="polite" aria-atomic="true">
-  <!-- Icon -->
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path fill="currentColor"
-      d="M7 2h10a2 2 0 0 1 2 2v7h-2V4H7v3L3 3l4-4v3zM5 12h2v8h10v-3l4 4-4 4v-3H5a2 2 0 0 1-2-2v-8z"/>
-  </svg>
-  <span>Für bessere Übersicht bitte <strong>quer drehen</strong>.</span>
 </div>
 <body>
 <header class="app-header">
