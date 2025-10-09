@@ -16,7 +16,7 @@ if (window.__MANIACS_INIT__) {
   const $$ = (s)=>[...document.querySelectorAll(s)];
   function setActiveTab(id){
     $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
-    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
+    $$('.view').forEach(v => v.classList.toggle('active', v.id === `view-${id}`));
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
