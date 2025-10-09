@@ -168,6 +168,18 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
 });
 
 /* ------------------ Matches ------------------ */
+function tierToText(code){
+  switch(code){
+    case 'L': return 'Local';
+    case 'R': return 'Regional';
+    case 'I': return 'International';
+    case 'C': return 'Challenge';
+    case 'S': return 'Special';
+    case 'W': return 'Worlds';
+    default: return '';
+  }
+}
+
 $('#match-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -175,10 +187,28 @@ $('#match-form').addEventListener('submit', async (e)=>{
   const playerId=opt?.value; const playerName=opt?.dataset.name||'';
   const m={
     date: $('#m-date').value || new Date().toISOString().slice(0,10),
-    playerId, player:playerName, deck:$('#m-deck').value.trim(),
-    opp:$('#m-opp').value.trim(), res:$('#m-res').value, event:$('#m-event').value.trim()
+    playerId, player:playerName,
+    deck: $('#m-deck').value.trim(),
+    opp:  $('#m-opp').value.trim(),
+    res:  $('#m-res').value,
+    tier: $('#m-tier').value,
+    event: $('#m-event').value.trim()
   };
   await addDoc(col(C_MATCHES), m);
+  // (Optional) einfache Stats-Aktualisierung im Player-Dokument
+  if(playerId){
+    const all=await getDocs(query(col(C_PLAYERS)));
+    all.forEach(async d=>{
+      if(d.id===playerId){
+        const p=d.data();
+        const wins=(p.wins||0)+(m.res==='W'?1:0);
+        const losses=(p.losses||0)+(m.res==='L'?1:0);
+        const draws=(p.draws||0)+(m.res==='D'?1:0);
+        const decks=[...(new Set([...(p.decks||[]), m.deck].filter(Boolean)))];
+        await setDoc(docRef(C_PLAYERS,playerId), {...p,wins,losses,draws,decks});
+      }
+    });
+  }
   e.target.reset();
 });
 
@@ -194,7 +224,7 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
         <td>${m.deck||''}</td>
         <td>${m.opp||''}</td>
         <td>${m.res||''}</td>
-        <td>${m.event||''}</td>
+        <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
         <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-match="${d.id}">Löschen</button>` : ''}</td>
       </tr>
     `);
@@ -295,9 +325,9 @@ $('#export-matches')?.addEventListener('click', async ()=>{
   const snap=await getDocs(query(col(C_MATCHES), orderBy('date','desc'))); const rows=[];
   snap.forEach(d=>{
     const m=d.data();
-    rows.push({ date:m.date||'', player:m.player||'', playerId:m.playerId||'', deck:m.deck||'', opponent:m.opp||'', result:m.res||'', event:m.event||'' });
+    rows.push({ date:m.date||'', player:m.player||'', playerId:m.playerId||'', deck:m.deck||'', opponent:m.opp||'', result:m.res||'', tier: tierToText(m.tier||''), event:m.event||'' });
   });
-  downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','event']);
+  downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','tier','event']);
 });
 
 $('#export-events')?.addEventListener('click', async ()=>{
