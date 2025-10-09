@@ -50,13 +50,23 @@
         </div>
       </div>
 
-      <div class="card">
-        <h3>Team Stats</h3>
-        <div class="grid-2">
-          <canvas id="chart-winrates" height="220"></canvas>
-          <canvas id="chart-decks" height="220"></canvas>
-        </div>
-      </div>
+<div class="card" id="team-stats-card">
+  <h3>Team Stats</h3>
+  <div class="grid-2">
+    <div>
+      <h4>Team Summary</h4>
+      <ul class="list" id="team-summary" style="margin-top:6px">
+        <!-- wird per JS gefüllt -->
+      </ul>
+    </div>
+    <div>
+      <h4>Top Deck (Wins)</h4>
+      <ul class="list" id="top-deck-list" style="margin-top:6px">
+        <!-- wird per JS gefüllt -->
+      </ul>
+    </div>
+  </div>
+</div>
 
       <div class="card">
         <h3>Letzte Matches</h3>
