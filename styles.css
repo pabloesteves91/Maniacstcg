@@ -265,3 +265,28 @@ dialog {
 
 /* Buttons in Toolbars dürfen umbrechen */
 .toolbar, .actions { flex-wrap: wrap; gap: 10px; }
+
+/* 1) Niemals horizontal scrollen (Safety Net) */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* 2) Tabs dürfen scrollen, der Rest nicht */
+.nav, .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.row.wrap { overflow-x: visible; }  /* <— vorher evtl. auto; macht gerne den Extra-Scroll */
+
+/* 3) Tabellen nur auf schmalen Screens künstlich verbreitern */
+#matches-list-card table,
+#events-list-card table,
+#players-table { width: 100%; min-width: 0; }   /* Standard: keine Mindestbreite */
+@media (max-width: 880px) {
+  #matches-list-card, #events-list-card, .table-wrap { overflow-x: auto; }
+  #matches-list-card table,
+  #events-list-card table,
+  #players-table { min-width: 680px; }          /* nur mobil breiter machen */
+}
+
+/* 4) Grid & Cards produzieren keinen Überhang */
+.grid-2 { gap: 20px; }
+.card  { overflow: visible; }                   /* falls irgendwo hidden/scroll gesetzt war */
+
+/* 5) Buttons/Inputs zwingen keinen Überlauf */
+input, select, button, .btn { min-height: 44px; font-size: 16px; max-width: 100%; }
