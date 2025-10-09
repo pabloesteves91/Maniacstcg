@@ -91,13 +91,28 @@
             <select id="m-player"></select>
             <input type="text" id="m-deck" placeholder="Deck" />
             <input type="text" id="m-opp" placeholder="Gegner" />
-            <select id="m-res">
-              <option value="W">Win</option><option value="L">Loss</option><option value="D">Draw</option>
-            <select id="m-res">
-              <option value="L">Local</option><option value="R">Regional</option><option value="I">International</option value="C">Challenge</option value="S">Special</option value="W">Worlds</option>
-            <button type="submit" class="btn">Speichern</button>
-          </form>
-        </div>
+            
+        <!-- Match-Ergebnis -->
+        <select id="m-res">
+          <option value="W">Win</option>
+          <option value="L">Loss</option>
+          <option value="D">Draw</option>
+        </select>
+
+        <!-- Event-Level (Local / Regional / etc.) -->
+        <select id="m-tier">
+          <option value="L">Local</option>
+          <option value="R">Regional</option>
+          <option value="I">International</option>
+          <option value="C">Challenge</option>
+          <option value="S">Special</option>
+          <option value="W">Worlds</option>
+        </select>
+
+        <input type="text" id="m-event" placeholder="Event" />
+        <button type="submit" class="btn">Speichern</button>
+      </form>
+    </div>
 
         <div class="card" id="matches-list-card">
           <div class="row between center wrap">
