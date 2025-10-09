@@ -41,35 +41,37 @@
 
   <main class="container">
     <!-- DASHBOARD -->
-    <section id="view-dashboard" class="view active">
-      <div class="card">
-        <div class="row between center wrap">
-          <h3>Team KPIs</h3>
-          <button class="btn ghost" id="export-stats">Export KPIs (CSV)</button>
-        </div>
-        <div class="kpi">
-          <div class="box"><div class="label">Players</div><div class="val" id="kpi-players">0</div></div>
-          <div class="box"><div class="label">Wins Total</div><div class="val" id="kpi-wins">0</div></div>
-          <div class="box"><div class="label">Top 8</div><div class="val" id="kpi-top8">0</div></div>
-        </div>
+<!-- DASHBOARD -->
+<section id="view-dashboard" class="view active">
+  <div class="card dashboard-kpis">
+    <h3 class="dashboard-title">Team KPIs</h3>
+    <div class="kpi-row">
+      <div class="kpi-box">
+        <div class="kpi-label">Players</div>
+        <div class="kpi-value" id="kpi-players">0</div>
       </div>
+      <div class="kpi-box">
+        <div class="kpi-label">Wins Total</div>
+        <div class="kpi-value" id="kpi-wins">0</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-label">Top 8</div>
+        <div class="kpi-value" id="kpi-top8">0</div>
+      </div>
+    </div>
+    <div class="row end" style="margin-top:16px;">
+      <button class="btn ghost" id="export-stats">Export KPIs (CSV)</button>
+    </div>
+  </div>
 
-      <div class="card">
-        <h3>Team Stats</h3>
-        <div class="grid-2">
-          <canvas id="chart-winrates" height="220"></canvas>
-          <canvas id="chart-decks" height="220"></canvas>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Letzte Matches</h3>
-        <table id="latest-results">
-          <thead><tr><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+  <div class="card">
+    <h3>Letzte Matches</h3>
+    <table id="latest-results">
+      <thead><tr><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
 
     <!-- PLAYERS -->
     <section id="view-players" class="view">
