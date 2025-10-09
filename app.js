@@ -169,6 +169,40 @@ function applyAdminUI(isAdmin){
   const teamSummaryEl = document.getElementById('team-summary');   // UL
   const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
+  // Map: playerId -> { date: 'YYYY-MM-DD', deck: '...' } des letzten GEWONNENEN Matches
+let latestWinDeckByPlayer = Object.create(null);
+
+// Cache der zuletzt geladenen Players (Array von {id, ...data})
+let lastPlayers = [];
+
+// Rendert die Players-Tabelle auf Basis von lastPlayers + latestWinDeckByPlayer
+function renderPlayersTable() {
+  if (!playersTBody) return;
+  const rows = [];
+
+  lastPlayers.forEach(p => {
+    const g = (p.wins||0) + (p.losses||0) + (p.draws||0);
+    const pct = g ? Math.round((p.wins||0) / g * 100) : 0;
+
+    // Deck des letzten GEWONNENEN Matches
+    const lw = latestWinDeckByPlayer[p.id];
+    const lastWinDeck = lw?.deck ? lw.deck : '—';
+
+    rows.push(
+      `<tr>
+        <td>${p.name}</td>
+        <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
+        <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
+        <td>${lastWinDeck}</td>
+        <td><button class="btn ghost admin-only" data-del-p="${p.id}">Löschen</button></td>
+      </tr>`
+    );
+  });
+
+  playersTBody.innerHTML = rows.join('');
+  attachPlayerDeleteButtons(); // deinen bestehenden Handler wiederverwenden
+}
+  
   /* ------------------ Players ------------------ */
   const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
 
@@ -184,25 +218,38 @@ function applyAdminUI(isAdmin){
     });
   }
 
-  onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
-    const rows=[], opts=[]; let tw=0, t8=0;
-    snap.forEach(d=>{
-      const p={id:d.id, ...d.data()};
-      const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
-      const pct=g?Math.round((p.wins||0)/g*100):0;
-      rows.push(
-        `<tr>
-          <td>${p.name}</td>
-          <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
-          <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-          <td>${(p.decks||[]).join(', ')}</td>
-          <td>${p.top8||0}</td>
-          <td><button class="btn ghost admin-only" data-del-p="${p.id}">Löschen</button></td>
-        </tr>`
-      );
-      opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
-      tw+=(p.wins||0); t8+=(p.top8||0);
-    });
+onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap) => {
+  const opts = [];
+  let tw = 0, t8 = 0; // t8 behalten für KPIs
+  lastPlayers = [];   // Cache neu füllen
+
+  snap.forEach(d => {
+    const p = { id: d.id, ...d.data() };
+    lastPlayers.push(p);
+
+    opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
+    tw += (p.wins||0);
+    t8 += (p.top8||0);
+  });
+
+  // Tabelle anhand des Caches + Map zeichnen
+  renderPlayersTable();
+
+  // Select + KPIs aktualisieren
+  mPlayerSelect.innerHTML = opts.join('');
+  $('#kpi-players').textContent = snap.size;
+  $('#kpi-wins').textContent = tw;
+  $('#kpi-top8').textContent = t8;
+
+  // Team-Top8 Summary (Dashboard) updaten (deine Logik beibehalten)
+  if (teamSummaryEl) {
+    const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
+    const li = existing || document.createElement('li');
+    li.setAttribute('data-stat','top8');
+    li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
+    if (!existing) teamSummaryEl.appendChild(li);
+  }
+});
     playersTBody.innerHTML = rows.join('');
     mPlayerSelect.innerHTML = opts.join('');
     $('#kpi-players').textContent = snap.size;
@@ -285,36 +332,67 @@ function applyAdminUI(isAdmin){
 
   const matchesTBody=$('#matches-table tbody'); const latestTBody=$('#latest-results tbody');
 
-  onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
-    const rows=[], latest=[];
-    let teamW = 0, teamL = 0, teamD = 0;
-    const deckWinCounts = {}; // deck -> wins
+onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap) => {
+  const rows = [], latest = [];
+  let teamW = 0, teamL = 0, teamD = 0;
+  const deckWinCounts = {};
 
-    snap.forEach(d=>{
-      const m=d.data();
-      rows.push(`
-        <tr>
-          <td>${m.date||''}</td>
-          <td>${m.player||''}</td>
-          <td>${m.deck||''}</td>
-          <td>${m.opp||''}</td>
-          <td>${m.res||''}</td>
-          <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
-          <td><button class="btn ghost admin-only" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button></td>
-        </tr>
-      `);
+  // NEU: Map frisch aufbauen
+  const newLatestWin = Object.create(null);
 
-      if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
+  snap.forEach(d => {
+    const m = d.data();
 
-      if (m.res === 'W') teamW++;
-      else if (m.res === 'L') teamL++;
-      else if (m.res === 'D') teamD++;
+    // ---- bestehendes Tabellenrendering für Matches (unverändert) ----
+    rows.push(`
+      <tr>
+        <td>${m.date||''}</td>
+        <td>${m.player||''}</td>
+        <td>${m.deck||''}</td>
+        <td>${m.opp||''}</td>
+        <td>${m.res||''}</td>
+        <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
+        <td><button class="btn ghost admin-only" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button></td>
+      </tr>
+    `);
 
-      if (m.res === 'W' && m.deck) {
+    if (latest.length < 6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
+
+    if (m.res === 'W') {
+      teamW++;
+      if (m.deck) {
         const key = m.deck.trim();
         if (key) deckWinCounts[key] = (deckWinCounts[key] || 0) + 1;
       }
-    });
+
+      // NEU: letzten Win pro Player bestimmen (erste in der DESC-Liste ist bereits der neueste)
+      const pid = m.playerId || '';
+      if (pid && !newLatestWin[pid]) {
+        newLatestWin[pid] = { date: m.date || '', deck: m.deck || '' };
+      }
+    } else if (m.res === 'L') teamL++;
+    else if (m.res === 'D') teamD++;
+  });
+
+  // NEU: Map übernehmen und Players-Tabelle refreshen
+  latestWinDeckByPlayer = newLatestWin;
+  renderPlayersTable();
+
+  // ---- Rest deiner bestehenden Matches-UI-Updates bleibt unverändert ----
+  matchesTBody.innerHTML = rows.join('');
+  latestTBody.innerHTML  = latest.join('');
+
+  $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!currentUser) return;
+    if(!isAdminUI)   return;
+    const pid = b.dataset.playerId || '';
+    await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
+    if (pid) await recomputePlayerStats(pid);
+  }));
+
+  // Team Summary / Top Deck (Wins) ... (deine vorhandene Logik)
+  // ...
+});
 
     matchesTBody.innerHTML = rows.join('');
     latestTBody.innerHTML  = latest.join('');
