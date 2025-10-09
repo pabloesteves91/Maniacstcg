@@ -7,7 +7,7 @@
   <link rel="icon" href="Maniacs_Logo_w.png" type="image/png" />
   <link rel="stylesheet" href="styles.css" />
   <script type="module" src="firebase.js"></script>
-  <script type="module" src="app.js?v=6"></script>
+  <script type="module" src="app.js?v=8"></script>
   <noscript>
     <style>main,nav,header{display:none}</style>
     <div style="padding:16px;font-family:sans-serif">Bitte JavaScript aktivieren.</div>
@@ -19,7 +19,9 @@
   <header class="app-header">
     <div class="container row between center wrap">
       <div class="row center gap-12">
-        <div class="logo"></div>
+        <div class="logo">
+          <img src="Maniacs_Logo_w.png" alt="Maniacs Logo" />
+        </div>
         <h1>MANIACS <span class="muted">· COMPETE</span></h1>
       </div>
       <div class="row center gap-8">
@@ -97,7 +99,7 @@
     <!-- MATCHES -->
     <section id="view-matches" class="view">
       <div class="grid-2">
-        <div class="card">
+        <div class="card" id="matches-form-card">
           <h3>Match eintragen</h3>
           <form id="match-form" class="form-grid">
             <input type="date" id="m-date" />
@@ -114,13 +116,13 @@
           </form>
         </div>
 
-        <div class="card">
+        <div class="card" id="matches-list-card">
           <div class="row between center wrap">
             <h3>Alle Matches</h3>
             <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
           </div>
           <table id="matches-table">
-            <thead><tr><th>Date</th><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th><th>Event</th></tr></thead>
+            <thead><tr><th>Date</th><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th><th>Event</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -130,7 +132,7 @@
     <!-- EVENTS -->
     <section id="view-events" class="view">
       <div class="grid-2">
-        <div class="card">
+        <div class="card" id="events-form-card">
           <h3>Event hinzufügen</h3>
           <form id="event-form" class="form-grid">
             <input type="text" id="ev-name" placeholder="Event-Name" required />
@@ -141,7 +143,7 @@
           </form>
         </div>
 
-        <div class="card">
+        <div class="card" id="events-list-card">
           <div class="row between center wrap">
             <h3>Events</h3>
             <button class="btn ghost" id="export-events">Export Events (CSV)</button>
@@ -157,7 +159,7 @@
     <!-- SPONSORS -->
     <section id="view-sponsors" class="view">
       <div class="grid-2">
-        <div class="card">
+        <div class="card" id="sponsor-form-card">
           <h3>Sponsor hinzufügen</h3>
           <form id="sponsor-form" class="form-grid">
             <input type="text" id="sp-name" placeholder="Sponsor-Name" required />
@@ -166,7 +168,7 @@
           </form>
         </div>
 
-        <div class="card">
+        <div class="card" id="sponsor-list-card">
           <div class="row between center wrap">
             <h3>Aktive Sponsoren</h3>
             <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
@@ -195,14 +197,8 @@
     <div class="container row between center wrap" style="padding:16px 0;">
       <div class="muted">© MANIACS · TCG</div>
       <div class="cta row" style="gap:10px">
-        <a href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 .001 7.001A3.5 3.5 0 0 0 12 9.5zM18 6.75a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg>
-          Instagram
-        </a>
-        <a href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369A19.79 19.79 0 0 0 16.882 3c-.2.36-.43.85-.588 1.234a18.27 18.27 0 0 0-4.588 0C11.47 3.85 11.24 3.36 11.04 3a19.79 19.79 0 0 0-3.435 1.369C4.18 7.205 3.42 10.94 3.74 14.62a19.9 19.9 0 0 0 3.97 2.03c.31-.43.59-.89.83-1.37-.46-.17-.9-.37-1.32-.6.11-.08.22-.16.33-.24a12.9 12.9 0 0 0 10.95 0c.11.08.22.16.33.24-.42.23-.86.43-1.32.6.24.48.52.94.83 1.37a19.9 19.9 0 0 0 3.97-2.03c.38-4.3-.63-8.01-2.96-10.25zM9.7 13.6c-.79 0-1.44-.74-1.44-1.64s.64-1.64 1.44-1.64 1.44.74 1.44 1.64-.64 1.64-1.44 1.64zm4.6 0c-.79 0-1.44-.74-1.44-1.64s.64-1.64 1.44-1.64 1.44.74 1.44 1.64-.64 1.64-1.44 1.64z"/></svg>
-          Discord
-        </a>
+        <a href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener">Discord</a>
       </div>
     </div>
   </footer>
