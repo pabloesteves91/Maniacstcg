@@ -436,62 +436,72 @@ dialog{
   .full-sm{ width:100% !important; }
 }
 
-/* Rotate-Tip: nur mobil, additive */
-#rotate-tip{
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 9999;
-  display: none;                /* per JS ein/aus */
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  border-top: 1px solid var(--line);
-  backdrop-filter: blur(4px);
-}
-#rotate-tip .inner{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 16px;
-  display: flex; gap: 10px; align-items: center; justify-content: center;
-  text-align: center;
-  font-size: 14px;
-}
-#rotate-tip svg{ flex: 0 0 auto; }
-#rotate-tip.show{ display: block; }
+/* ===== Rotate Overlay (zentrierter Banner + Blur) ===== */
 
-/* Desktop-Schutz */
+/* Vollbild-Overlay: zentriert, mit Blur dahinter */
+#rotate-tip.rotate-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;                 /* sichtbar via .show */
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  /* dunkler Film + Blur */
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 24px;
+}
+
+/* Card in der Mitte */
+#rotate-tip .rotate-card{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 92vw;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(18,22,30,.95);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  transform: translateY(-4px) scale(.98);
+  opacity: 0;
+  animation: rotateCardIn .22s ease-out forwards;
+}
+
+/* Icon */
+#rotate-tip .rotate-icon{
+  font-size: 22px;
+  line-height: 1;
+  opacity: .95;
+  filter: drop-shadow(0 0 2px rgba(255,255,255,.2));
+}
+
+/* Text */
+#rotate-tip .rotate-text{
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.35;
+}
+#rotate-tip .rotate-text strong{
+  font-weight: 800;
+}
+
+/* Sichtbarkeit */
+#rotate-tip.show{ display: flex; }
+
+/* dezente Intro-Animation */
+@keyframes rotateCardIn{
+  to{ transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Weniger Bewegung, wenn gewünscht */
+@media (prefers-reduced-motion: reduce){
+  #rotate-tip .rotate-card{ animation: none; opacity: 1; transform: none; }
+}
+
+/* Desktop niemals zeigen (Schutz ≥ 1100px) */
 @media (min-width:1100px){
   #rotate-tip{ display: none !important; }
-}
-
-/* Top-Banner für Rotate-Hinweis */
-#rotate-tip.rotate-tip-bar{
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 9999;
-  display: none;                 /* wird per JS mit .show sichtbar */
-  align-items: center;
-  gap: 12px;
-  padding: calc(env(safe-area-inset-top,0) + 8px) 16px 10px; /* iOS-Notch safe */
-  background: rgba(0,0,0,.92);
-  color: #fff;
-  border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  font-size: 16px;
-  line-height: 1.3;
-}
-#rotate-tip.rotate-tip-bar svg{
-  width: 22px; height: 22px; flex: 0 0 auto;
-  opacity: .95;
-}
-#rotate-tip.show{ display:flex; animation: rotateTipEnter .25s ease-out; }
-
-@keyframes rotateTipEnter{
-  from{ transform: translateY(-6px); opacity:.0; }
-  to  { transform: translateY(0);    opacity:1; }
-}
-
-/* Desktop-Schutz */
-@media (min-width:1100px){
-  #rotate-tip{ display:none !important; }
 }
