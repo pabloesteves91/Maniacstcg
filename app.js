@@ -238,15 +238,18 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-    // Matches-Form: Player Dropdown
-    if (mPlayerSelect) {
-      const opts=[];
-      docs.forEach(d=>{
-        const p=d.data();
-        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
-      });
-      mPlayerSelect.innerHTML = opts.join('');
-    }
+// Matches-Form: Player Dropdown
+if (mPlayerSelect) {
+  const opts = [];
+  // Platzhalter (verhindert "leere" Auswahl & iOS-Picker-Bug)
+  opts.push('<option value="" disabled selected hidden>– Player wählen –</option>');
+  docs.forEach(d=>{
+    const p = d.data();
+    opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
+  });
+  mPlayerSelect.innerHTML = opts.join('');
+  mPlayerSelect.disabled = docs.length === 0;
+}
   }
 
   // Matches
