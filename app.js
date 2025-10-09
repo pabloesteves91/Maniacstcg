@@ -1,10 +1,9 @@
-// MANIACS · COMPETE — app.js (final, text-based team stats)
-// Login, CRUD, CSV-Export, Readonly-Layout, Owner-only Writes/Deletes
+// MANIACS · COMPETE — app.js (final with recompute on match add/delete)
 
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
-  query, orderBy, deleteDoc
+  query, orderBy, deleteDoc, where
 } from './firebase.js';
 
 /* ------------------ Helpers ------------------ */
@@ -162,6 +161,29 @@ function tierToText(code){
   }
 }
 
+/* Recompute: berechnet W/L/D + Decks für einen Player aus seinen Matches */
+async function recomputePlayerStats(playerId){
+  if(!playerId) return;
+  const ms = await getDocs(query(col(C_MATCHES), where('playerId','==',playerId)));
+  let wins=0, losses=0, draws=0;
+  const decksSet = new Set();
+  ms.forEach(doc=>{
+    const m = doc.data();
+    if(m.res==='W') wins++;
+    else if(m.res==='L') losses++;
+    else if(m.res==='D') draws++;
+    if(m.deck) decksSet.add(String(m.deck).trim());
+  });
+  // Player-Dokument finden und aktualisieren
+  const allPlayers = await getDocs(query(col(C_PLAYERS)));
+  allPlayers.forEach(async d=>{
+    if(d.id===playerId){
+      const p = d.data();
+      await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
+    }
+  });
+}
+
 $('#match-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -177,20 +199,8 @@ $('#match-form').addEventListener('submit', async (e)=>{
     event: $('#m-event').value.trim()
   };
   await addDoc(col(C_MATCHES), m);
-  // (Optional) einfache Stats-Aktualisierung im Player-Dokument
-  if(playerId){
-    const all=await getDocs(query(col(C_PLAYERS)));
-    all.forEach(async d=>{
-      if(d.id===playerId){
-        const p=d.data();
-        const wins=(p.wins||0)+(m.res==='W'?1:0);
-        const losses=(p.losses||0)+(m.res==='L'?1:0);
-        const draws=(p.draws||0)+(m.res==='D'?1:0);
-        const decks=[...(new Set([...(p.decks||[]), m.deck].filter(Boolean)))];
-        await setDoc(docRef(C_PLAYERS,playerId), {...p,wins,losses,draws,decks});
-      }
-    });
-  }
+  // Nach dem Anlegen: Stats aus allen Matches neu berechnen
+  if (playerId) await recomputePlayerStats(playerId);
   e.target.reset();
 });
 
@@ -205,7 +215,6 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   snap.forEach(d=>{
     const m=d.data();
 
-    // Tabelle
     rows.push(`
       <tr>
         <td>${m.date||''}</td>
@@ -214,7 +223,11 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
         <td>${m.opp||''}</td>
         <td>${m.res||''}</td>
         <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
-        <td>${currentUser?.email===OWNER_EMAIL ? `<button class="btn ghost" data-del-match="${d.id}">Löschen</button>` : ''}</td>
+        <td>${
+          currentUser?.email===OWNER_EMAIL
+            ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>`
+            : ''
+        }</td>
       </tr>
     `);
 
@@ -234,11 +247,13 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   matchesTBody.innerHTML = rows.join('');
   latestTBody.innerHTML  = latest.join('');
 
-  // Delete-Listener
+  // Delete-Listener mit Recompute
   $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!currentUser) return;
     if(currentUser.email !== OWNER_EMAIL) return;
+    const pid = b.dataset.playerId || '';
     await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
+    if (pid) await recomputePlayerStats(pid);
   }));
 
   // --- Team Summary rendern (W/L/D + Top8 aus Players) ---
@@ -363,7 +378,11 @@ $('#export-matches')?.addEventListener('click', async ()=>{
   const snap=await getDocs(query(col(C_MATCHES), orderBy('date','desc'))); const rows=[];
   snap.forEach(d=>{
     const m=d.data();
-    rows.push({ date:m.date||'', player:m.player||'', playerId:m.playerId||'', deck:m.deck||'', opponent:m.opp||'', result:m.res||'', tier: tierToText(m.tier||''), event:m.event||'' });
+    rows.push({
+      date:m.date||'', player:m.player||'', playerId:m.playerId||'',
+      deck:m.deck||'', opponent:m.opp||'', result:m.res||'',
+      tier: tierToText(m.tier||''), event:m.event||''
+    });
   });
   downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','tier','event']);
 });
