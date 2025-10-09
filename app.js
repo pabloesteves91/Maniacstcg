@@ -1,11 +1,9 @@
-// MANIACS · COMPETE — app.js (final, register + verify-mail, no UI gating)
+// MANIACS · COMPETE — app.js (final hardened: init-guard + submit-debounce)
 
-// ---- Firebase Re-exports aus deiner firebase.js ----
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
-  query, orderBy, deleteDoc,
-  registerEmail
+  query, orderBy, deleteDoc
 } from './firebase.js';
 
 // ===== Global Init Guard (verhindert doppelte Initialisierung) =====
@@ -14,18 +12,18 @@ if (window.__MANIACS_INIT__) {
 } else {
   window.__MANIACS_INIT__ = true;
 
-  /* ------------------ Helpers ------------------ */
+  // ------------------ Helpers ------------------
   const $  = (s)=>document.querySelector(s);
   const $$ = (s)=>[...document.querySelectorAll(s)];
   function setActiveTab(id){
-    $$('.tab')?.forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
-    $$('.view')?.forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
+    $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
+    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
   }
-  $$('.tab')?.forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
+  $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
   const OWNER_EMAIL = "fabioberta@me.com";
 
-  /* ---------- CSV helpers ---------- */
+  // ---------- CSV helpers ----------
   function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
   function toCSV(rows, order){
     const bom='\uFEFF';
@@ -41,14 +39,14 @@ if (window.__MANIACS_INIT__) {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
 
-  /* ------------------ Auth ------------------ */
-  $('#login-form')?.addEventListener('submit', async (e)=>{
+  // ------------------ Auth ------------------
+  $('#login-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email=$('#login-email').value.trim(); const pass=$('#login-pass').value;
     try{ await loginEmail(email,pass); $('#login-pass').value=''; }
     catch(err){ alert('Login fehlgeschlagen: '+(err.message||err)); }
   });
-  $('#btn-logout')?.addEventListener('click', logout);
+  $('#btn-logout').addEventListener('click', logout);
 
   let currentUser=null;
   onUser(async (user)=>{
@@ -56,10 +54,10 @@ if (window.__MANIACS_INIT__) {
 
     // Header UI
     $('#user-info').textContent = user ? user.email : '';
-    $('#btn-logout')?.classList.toggle('hidden', !user);
-    $('#login-form')?.classList.toggle('hidden', !!user);
+    $('#btn-logout').classList.toggle('hidden', !user);
+    $('#login-form').classList.toggle('hidden', !!user);
 
-    // Public Read Mode: Wenn NICHT eingeloggt, linke Form-Karten verstecken & rechte Liste mittig
+    // Read-only Layout: linke Karten verstecken, rechte Karte mittig
     const isLoggedIn = !!user;
     document.body.classList.toggle('readonly', !isLoggedIn);
 
@@ -71,62 +69,17 @@ if (window.__MANIACS_INIT__) {
     $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
-    // Owner-Bereiche (Players/Sponsors)
+    // Owner-Bereiche
     const isOwner = !!(user && user.email===OWNER_EMAIL);
     $('#sponsor-form')?.classList.toggle('hidden', !isOwner);
     $('#sponsor-form-card')?.classList.toggle('hidden', !isOwner);
     $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
   });
 
-  /* ------------------ Registrierung (rechts neben Login) ------------------ */
-  const regModal = document.getElementById('register-modal');
-  document.getElementById('btn-open-register')?.addEventListener('click', ()=>{
-    try { regModal.showModal(); } catch { regModal.setAttribute('open',''); }
-  });
-  document.getElementById('btn-reg-cancel')?.addEventListener('click', ()=>{
-    regModal.close?.();
-  });
-
-  let registering = false;
-  document.getElementById('register-form')?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    if (registering) return;
-
-    const email  = document.getElementById('reg-email').value.trim();
-    const email2 = document.getElementById('reg-email2').value.trim();
-    const pass   = document.getElementById('reg-pass').value;
-    const pass2  = document.getElementById('reg-pass2').value;
-
-    if (!email || !email2 || !pass || !pass2) { alert('Bitte alle Felder ausfüllen.'); return; }
-    if (email !== email2) { alert('E-Mail-Adressen stimmen nicht überein.'); return; }
-    if (pass  !== pass2)  { alert('Passwörter stimmen nicht überein.'); return; }
-    if (pass.length < 6)  { alert('Passwort mindestens 6 Zeichen.'); return; }
-
-    const btn = e.submitter;
-    try {
-      registering = true;
-      btn?.setAttribute('disabled','disabled');
-
-      await registerEmail(email, pass);   // erstellt Account & sendet Verifizierungs-Mail
-      alert('Registrierung erfolgreich. Bitte E-Mail bestätigen und danach einloggen.');
-      regModal.close?.();
-      e.target.reset();
-    } catch (err) {
-      const msg = String(err?.message || err);
-      if (msg.includes('email-already-in-use')) alert('Diese E-Mail wird bereits verwendet.');
-      else if (msg.includes('invalid-email'))   alert('Ungültige E-Mail-Adresse.');
-      else if (msg.includes('weak-password'))   alert('Passwort zu schwach (min. 6).');
-      else alert('Registrierung fehlgeschlagen: ' + msg);
-    } finally {
-      registering = false;
-      btn?.removeAttribute('disabled');
-    }
-  });
-
-  /* ------------------ Collections ------------------ */
+  // ------------------ Collections ------------------
   const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
-  /* ------------------ Player Modal ------------------ */
+  // ------------------ Player Modal (wie am Anfang) ------------------
   const playerModal = $('#player-modal');
   function openPlayerModal(){
     if(!currentUser) return alert('Bitte zuerst einloggen.');
@@ -138,7 +91,7 @@ if (window.__MANIACS_INIT__) {
   // Submit-Debounce Flags
   const submitting = { player:false, match:false };
 
-  $('#player-form')?.addEventListener('submit', async (e)=>{
+  $('#player-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(submitting.player) return;          // Debounce
     if(!currentUser) return alert('Login erforderlich.');
@@ -162,11 +115,11 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  /* ------------------ Team Stats Targets (text) ------------------ */
+  // ------------------ Team Stats Targets (text) ------------------
   const teamSummaryEl = document.getElementById('team-summary');   // UL
   const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
-  /* ------------------ Players ------------------ */
+  // ------------------ Players ------------------
   let _playersCache=[]; let _deckCounts={};
   const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
 
@@ -214,7 +167,7 @@ if (window.__MANIACS_INIT__) {
     }));
   });
 
-  /* ------------------ Matches ------------------ */
+  // ------------------ Matches ------------------
   function tierToText(code){
     switch(code){
       case 'L': return 'Local';
@@ -253,12 +206,9 @@ if (window.__MANIACS_INIT__) {
         await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
       }
     }
-
-    // (Optional) Sofort-Refresh der Tabelle (OnSnapshot liefert i. d. R. ohnehin die Änderung)
-    // — hier nicht zwingend nötig —
   }
 
-  $('#match-form')?.addEventListener('submit', async (e)=>{
+  $('#match-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(submitting.match) return;        // Debounce
     if(!currentUser) return alert('Login erforderlich.');
@@ -375,8 +325,8 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  /* ------------------ Events ------------------ */
-  $('#event-form')?.addEventListener('submit', async (e)=>{
+  // ------------------ Events ------------------
+  $('#event-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
     const ev={
@@ -413,8 +363,8 @@ if (window.__MANIACS_INIT__) {
     }));
   });
 
-  /* ------------------ Sponsors ------------------ */
-  $('#sponsor-form')?.addEventListener('submit', async (e)=>{
+  // ------------------ Sponsors ------------------
+  $('#sponsor-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!currentUser) return alert('Login erforderlich.');
     if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Sponsoren speichern.');
@@ -446,7 +396,7 @@ if (window.__MANIACS_INIT__) {
     }));
   });
 
-  /* ------------------ CSV Exports ------------------ */
+  // ------------------ CSV Exports ------------------
   $('#export-players')?.addEventListener('click', async ()=>{
     const snap=await getDocs(query(col(C_PLAYERS), orderBy('name'))); const rows=[];
     snap.forEach(d=>{
