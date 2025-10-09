@@ -33,7 +33,6 @@
       <button class="tab" data-tab="matches">Matches</button>
       <button class="tab" data-tab="events">Events</button>
       <button class="tab" data-tab="sponsors">Sponsors</button>
-      <button class="tab hidden" id="tab-admin" data-tab="admin">Admin</button>
     </nav>
   </header>
 
@@ -145,31 +144,6 @@
         </div>
       </div>
     </section>
-
-    <!-- ADMIN -->
-    <section id="view-admin" class="view">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Benutzer anlegen</h3>
-          <form id="admin-create-user" class="form-grid">
-            <input id="a-email" type="email" placeholder="E‑Mail" required />
-            <input id="a-pass" type="password" placeholder="Passwort" required />
-            <select id="a-role"><option value="member">member</option><option value="admin">admin</option></select>
-            <button class="btn" type="submit">User erstellen</button>
-          </form>
-          <p class="muted">Erstellt einen Auth‑User <strong>und</strong> setzt die Rolle. Spiegelt das Profil in <code>users</code>.</p>
-        </div>
-        <div class="card">
-          <h3>Bestehende Benutzer</h3>
-          <div class="muted" style="margin-bottom:8px">(Liste aus <code>users</code>)</div>
-          <table id="users-table">
-            <thead><tr><th>Name/E‑Mail</th><th>Rolle</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
 
   <!-- Modal: Add Player -->
   <dialog id="player-modal">
