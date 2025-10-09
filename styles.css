@@ -257,3 +257,23 @@ dialog{
   .kpi-box{ padding:16px 20px; }
   .kpi-value{ font-size:28px; }
 }
+
+/* Titel im Header etwas größer und markanter */
+.app-header .app-title {
+  font-size: 24px;         /* vorher 20px */
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  line-height: 1;
+}
+
+@media (max-width:720px){
+  .app-header .app-title{
+    font-size: 20px;       /* leicht kleiner auf Mobile */
+  }
+}
+
+.app-header .app-title .muted {
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
