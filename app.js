@@ -1,4 +1,11 @@
-import { auth, loginEmail, logout, onUser, col, docRef, addDoc, setDoc, getDocs, onSnapshot, query, orderBy, deleteDoc, cfCreateUser, cfSetUserRole } from './firebase.js';
+// app.js — MANIACS · COMPETE (ohne Admin-Tab)
+// Nur fabioberta@me.com darf Players anlegen/löschen.
+
+import {
+  auth, loginEmail, logout, onUser,
+  col, docRef, addDoc, setDoc, getDocs, onSnapshot,
+  query, orderBy, deleteDoc
+} from './firebase.js';
 
 // ---------- Helpers ----------
 const $  = (sel)=>document.querySelector(sel);
@@ -24,66 +31,41 @@ $('#login-form').addEventListener('submit', async (e)=>{
 $('#btn-logout').addEventListener('click', logout);
 
 let currentUser = null;
-let currentRole = 'guest';
+const OWNER_EMAIL = "fabioberta@me.com";
 
-// --- Firestore-Fallback für Rolle (ohne Terminal/Custom Claim) ---
-async function getRoleFromFirestore(uid){
-  try{
-    if(!auth.currentUser) return null;
-    const idToken   = await auth.currentUser.getIdToken(/* forceRefresh */ true);
-    const projectId = auth.app.options.projectId;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}?access_token=${idToken}`;
-    const r = await fetch(url);
-    if(!r.ok) return null;
-    const data = await r.json();
-    return data?.fields?.role?.stringValue || null;
-  }catch{
-    return null;
-  }
-}
+// Sichtbarkeit zu Beginn (bis onUser feuert)
+document.getElementById('btn-open-player')?.classList.add('hidden');
 
 onUser(async (user)=>{
   currentUser = user || null;
 
-  // UI: Login/Logout switch
+  // UI: Login/Logout
   $('#user-info').textContent = user ? user.email : '';
   $('#btn-logout').classList.toggle('hidden', !user);
   $('#login-form').classList.toggle('hidden', !!user);
 
-  // Rolle ermitteln
-  currentRole = 'guest';
-  if(user){
-    // 1) Versuch: Custom Claim (falls irgendwann gesetzt)
-    const tokenRes = await user.getIdTokenResult(true);
-    currentRole = tokenRes.claims.role || 'member';
-
-    // 2) Fallback: Firestore users/<uid>.role (online in Console setzbar)
-    if(currentRole !== 'admin'){
-      const fsRole = await getRoleFromFirestore(user.uid);
-      if(fsRole) currentRole = fsRole;
-    }
-  }
-
-  const isAdmin = currentRole === 'admin';
-  $('#tab-admin').classList.toggle('hidden', !isAdmin);
-  if(!isAdmin && $$('.tab.active')[0]?.dataset.tab==='admin'){
-    setActiveTab('dashboard');
-  }
+  // Nur Fabio sieht "+ Player"
+  const canEditPlayers = !!(user && user.email === OWNER_EMAIL);
+  document.getElementById('btn-open-player')?.classList.toggle('hidden', !canEditPlayers);
 });
 
 // ---------- Collections ----------
-const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors', C_USERS='users';
+const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
 // ---------- Players ----------
 const playerModal = $('#player-modal');
-$('#btn-open-player').addEventListener('click',()=>{
+
+$('#btn-open-player')?.addEventListener('click', ()=>{
   if(!currentUser) return alert('Bitte zuerst einloggen.');
+  if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players anlegen.');
   playerModal.showModal();
 });
+
 $('#player-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
-  const name = $('#p-name').value.trim();
+  if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players anlegen.');
+  const name  = $('#p-name').value.trim();
   const decks = $('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean);
   if(!name) return;
   await addDoc(col(C_PLAYERS), { name, wins:0, losses:0, draws:0, top8:0, decks });
@@ -93,8 +75,10 @@ $('#player-form').addEventListener('submit', async (e)=>{
 
 const playersTBody = $('#players-table tbody');
 const mPlayerSelect = $('#m-player');
+
 onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
-  const rows=[], opts=[]; let tw=0, t8=0;
+  const rows=[], opts=[];
+  let tw=0, t8=0;
   snap.forEach(d=>{
     const p={id:d.id,...d.data()};
     const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
@@ -118,8 +102,10 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   $('#kpi-wins').textContent = tw;
   $('#kpi-top8').textContent = t8;
 
+  // Löschen nur für Fabio
   $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
     if(!currentUser) return alert('Login erforderlich.');
+    if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players löschen.');
     await deleteDoc(docRef(C_PLAYERS, b.dataset.delP));
   }));
 });
@@ -129,15 +115,15 @@ $('#match-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
   const opt = mPlayerSelect.selectedOptions[0];
-  const playerId = opt?.value;
+  const playerId   = opt?.value;
   const playerName = opt?.dataset.name || '';
   const m = {
-    date: $('#m-date').value || new Date().toISOString().slice(0,10),
+    date:  $('#m-date').value || new Date().toISOString().slice(0,10),
     playerId,
     player: playerName,
-    deck: $('#m-deck').value.trim(),
-    opp:  $('#m-opp').value.trim(),
-    res:  $('#m-res').value,
+    deck:  $('#m-deck').value.trim(),
+    opp:   $('#m-opp').value.trim(),
+    res:   $('#m-res').value,
     event: $('#m-event').value.trim()
   };
   await addDoc(col(C_MATCHES), m);
@@ -148,10 +134,10 @@ $('#match-form').addEventListener('submit', async (e)=>{
     all.forEach(async d=>{
       if(d.id===playerId){
         const p=d.data();
-        const wins  = (p.wins||0)   + (m.res==='W'?1:0);
-        const losses= (p.losses||0) + (m.res==='L'?1:0);
-        const draws = (p.draws||0)  + (m.res==='D'?1:0);
-        const decks = [...new Set([...(p.decks||[]), m.deck].filter(Boolean))];
+        const wins   = (p.wins||0)   + (m.res==='W'?1:0);
+        const losses = (p.losses||0) + (m.res==='L'?1:0);
+        const draws  = (p.draws||0)  + (m.res==='D'?1:0);
+        const decks  = [...new Set([...(p.decks||[]), m.deck].filter(Boolean))];
         await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks });
       }
     });
@@ -161,6 +147,7 @@ $('#match-form').addEventListener('submit', async (e)=>{
 
 const matchesTBody = $('#matches-table tbody');
 const latestTBody  = $('#latest-results tbody');
+
 onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   const rows=[], latest=[];
   snap.forEach(d=>{
@@ -185,6 +172,7 @@ $('#event-form').addEventListener('submit', async (e)=>{
   await addDoc(col(C_EVENTS), ev);
   e.target.reset();
 });
+
 const eventsBody = $('#events-table tbody');
 const eventsMini = $('#events-mini tbody');
 onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
@@ -206,6 +194,7 @@ $('#sponsor-form').addEventListener('submit', async (e)=>{
   await addDoc(col(C_SPONS), s);
   e.target.reset();
 });
+
 const sponsList = $('#sponsor-list');
 onSnapshot(col(C_SPONS), (snap)=>{
   const items=[];
@@ -226,38 +215,4 @@ onSnapshot(col(C_SPONS), (snap)=>{
     if(!currentUser) return alert('Login erforderlich.');
     await deleteDoc(docRef(C_SPONS, b.dataset.delS));
   }));
-});
-
-// ---------- Admin ----------
-$('#admin-create-user').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  if(currentRole!=='admin') return alert('Nur Admin.');
-  const email = $('#a-email').value.trim();
-  const pass  = $('#a-pass').value;
-  const role  = $('#a-role').value;
-  try{
-    const res = await cfCreateUser({ email, password: pass, role });
-    alert('User erstellt: '+res.data.uid);
-    e.target.reset();
-  }catch(err){
-    // Falls Function noch Custom Claim verlangt, bekommt man hier eine klare Meldung
-    alert('Fehler (CreateUser): '+(err.message || JSON.stringify(err)));
-  }
-});
-
-// Benutzerliste aus users-Collection
-const usersTBody = $('#users-table tbody');
-onSnapshot(query(col(C_USERS), orderBy('email')), (snap)=>{
-  const rows=[];
-  snap.forEach(d=>{
-    const u=d.data();
-    rows.push(
-      `<tr>
-        <td>${u.displayName||''} ${u.email?`<span class='muted'>(${u.email})</span>`:''}</td>
-        <td>${u.role||'member'}</td>
-        <td></td>
-      </tr>`
-    );
-  });
-  usersTBody.innerHTML = rows.join('');
 });
