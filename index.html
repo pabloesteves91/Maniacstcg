@@ -70,25 +70,28 @@
 <body>
 
   <!-- Header -->
-  <header>
-    <div class="container">
-      <div class="row between center wrap">
-        <a class="brand row center" href="#"><img src="Maniacs_Logo_w.png" alt="MANIACS" /></a>
-        <div class="row center wrap" style="gap:8px">
-          <!-- Nur Login -->
-          <form id="login-form" class="row" autocomplete="on">
-            <input type="email" id="login-email" placeholder="E-Mail" required />
-            <input type="password" id="login-pass" placeholder="Passwort" required />
-            <button type="submit" class="btn">Login</button>
-          </form>
-          <div class="row center">
-            <span id="user-info" class="muted"></span>
-            <button id="btn-logout" class="btn ghost hidden">Logout</button>
-          </div>
+<header>
+  <div class="container">
+    <div class="row between center wrap">
+      <div class="row center" style="gap:14px">
+        <img src="Maniacs_Logo_w.png" alt="MANIACS" style="height:52px;display:block" />
+        <h1 style="font-size:24px;letter-spacing:1px;margin:0;font-weight:700;">MANIACS · COMPETE</h1>
+      </div>
+      <div class="row center wrap" style="gap:8px">
+        <!-- Login -->
+        <form id="login-form" class="row" autocomplete="on">
+          <input type="email" id="login-email" placeholder="E-Mail" required />
+          <input type="password" id="login-pass" placeholder="Passwort" required />
+          <button type="submit" class="btn">Login</button>
+        </form>
+        <div class="row center">
+          <span id="user-info" class="muted"></span>
+          <button id="btn-logout" class="btn ghost hidden">Logout</button>
         </div>
       </div>
     </div>
-  </header>
+  </div>
+</header>
 
   <!-- Main -->
   <main class="container">
@@ -255,17 +258,34 @@
   </main>
 
   <!-- Footer -->
-  <footer class="container">
-    <div class="footer-links">
-      <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener" aria-label="Instagram">
-        <img src="icons/instagram.svg" alt="">
-      </a>
-      <a class="social-btn" href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener" aria-label="Discord">
-        <img src="icons/discord.svg" alt="">
-      </a>
-    </div>
-    <p class="muted" style="margin-top:8px">© 2025 MANIACS TCG</p>
-  </footer>
+<footer class="container">
+  <div class="footer-links">
+    <!-- Instagram -->
+    <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="22" height="22" fill="white">
+        <path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9S160.5 370.8 224.1 370.8 
+        339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.2 0-74.7-33.4-74.7-74.7 
+        s33.4-74.7 74.7-74.7 74.7 33.4 74.7 74.7-33.5 74.7-74.7 74.7zm146.4-194.3
+        c0 14.9-12 26.9-26.9 26.9s-26.9-12-26.9-26.9 12-26.9 
+        26.9-26.9 26.9 12 26.9 26.9zm76.1 27.2c-1.7-35.7-9.9-67.3-36.2-93.6S385.5 
+        35.7 349.8 34C314 32.3 277.5 32 224.1 32s-89.9.3-125.7 2C62.6 35.7 31 
+        43.9 4.7 70.2S-29.6 126.5-31.3 162.3C-33 198.1-33.3 234.6-33.3 
+        288s.3 89.9 2 125.7c1.7 35.7 9.9 67.3 36.2 93.6s57.9 34.5 
+        93.6 36.2c35.8 1.7 72.3 2 125.7 2s89.9-.3 125.7-2c35.7-1.7 
+        67.3-9.9 93.6-36.2s34.5-57.9 36.2-93.6c1.7-35.8 2-72.3 
+        2-125.7s-.3-89.9-2-125.7z"/>
+      </svg>
+    </a>
+
+    <!-- Discord -->
+    <a class="social-btn" href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener" aria-label="Discord" title="Discord">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="24" height="24" fill="white">
+        <path d="M524.5 64C562 64 596 97 600 134l40 314c3 36-29 66-65 66-306 0-424-74-520-210C0 190 40 64 76 64h90l20 80c20-10 50-20 94-20s74 10 94 20l20-80h90zM208 256c-17 0-32 15-32 32s15 32 32 32 32-15 32-32-15-32-32-32zm160 0c-17 0-32 15-32 32s15 32 32 32 32-15 32-32-15-32-32-32z"/>
+      </svg>
+    </a>
+  </div>
+  <p class="muted" style="margin-top:8px">© 2025 MANIACS TCG</p>
+</footer>
 
   <!-- Player Modal -->
   <dialog id="player-modal">
