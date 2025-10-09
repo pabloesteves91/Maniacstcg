@@ -260,7 +260,7 @@ dialog{
 /* Streak Leader gleich groß wie andere, nur rot */
 .kpi-box .kpi-value.streak {
   color: #e33;
-  font-size: 36px; /* exakt gleiche Höhe/Größe */
+  font-size: 30px; /* exakt gleiche Höhe/Größe */
 }
 }
 @media (max-width:700px){
