@@ -505,32 +505,3 @@ dialog{
 @media (min-width:1100px){
   #rotate-tip{ display: none !important; }
 }
-
-/* ===== Smooth Fade-Out für Rotate-Tip ===== */
-
-/* Standardzustand (versteckt) */
-#rotate-tip {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease-in-out, backdrop-filter 0.4s ease-in-out;
-}
-
-/* Wenn sichtbar: blendet weich ein */
-#rotate-tip.show {
-  opacity: 1;
-  pointer-events: all;
-  transition: opacity 0.35s ease-in-out, backdrop-filter 0.4s ease-in-out;
-}
-
-/* Optionale subtile Zoom-Animation der Card */
-#rotate-tip .rotate-card {
-  transition: transform 0.35s ease, opacity 0.35s ease;
-}
-#rotate-tip.show .rotate-card {
-  transform: scale(1);
-  opacity: 1;
-}
-#rotate-tip:not(.show) .rotate-card {
-  transform: scale(0.95);
-  opacity: 0;
-}
