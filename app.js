@@ -245,33 +245,14 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-    // Matches-Form: Player Dropdown (robust, iOS/Safari-freundlich)
+// Matches-Form: Player Dropdown
     if (mPlayerSelect) {
-      const prev = mPlayerSelect.value; // vorherige Auswahl merken
-      let html = '<option value="">– Player wählen –</option>';
+      const opts=[];
       docs.forEach(d=>{
-        const p = d.data();
-        html += `<option value="${d.id}" data-name="${p.name}">${p.name}</option>`;
+        const p=d.data();
+        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
       });
-      mPlayerSelect.innerHTML = html;
-
-      if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
-        mPlayerSelect.value = prev;
-      } else {
-        if (docs.length === 1) mPlayerSelect.value = docs[0].id;
-        else mPlayerSelect.value = "";
-      }
-
-      // iOS/Safari: nach DOM-Update synchronisieren
-      setTimeout(()=>{
-        const sel = mPlayerSelect.options[mPlayerSelect.selectedIndex];
-        mPlayerSelect.dataset.selectedName = sel ? (sel.dataset.name || sel.textContent || "") : "";
-        mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
-      }, 0);
-
-      // Natives UI erzwingen
-      mPlayerSelect.style.webkitAppearance = 'menulist-button';
-      mPlayerSelect.style.appearance = 'menulist';
+      mPlayerSelect.innerHTML = opts.join('');
     }
   }
 
