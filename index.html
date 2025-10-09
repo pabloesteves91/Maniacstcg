@@ -3,26 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TEAM MANIACS</title>
+  <title>MANIACS · COMPETE</title>
   <link rel="icon" href="Maniacs_Logo_w.png" type="image/png" />
   <link rel="stylesheet" href="styles.css" />
   <script type="module" src="firebase.js"></script>
-  <script type="module" src="app.js?v=8"></script>
-  <noscript>
-    <style>main,nav,header{display:none}</style>
-    <div style="padding:16px;font-family:sans-serif">Bitte JavaScript aktivieren.</div>
-  </noscript>
+  <script type="module" src="app.js?v=10"></script>
 </head>
 <body>
-
-  <!-- HEADER -->
   <header class="app-header">
     <div class="container row between center wrap">
       <div class="row center gap-12">
-        <div class="logo">
-          <img src="Maniacs_Logo_w.png" alt="Maniacs Logo" />
-        </div>
-        <h1>TEAM MANIACS <span class="muted">· STATS</span></h1>
+        <div class="logo"><img src="Maniacs_Logo_w.png" alt="Logo" /></div>
+        <h1>MANIACS <span class="muted">· COMPETE</span></h1>
       </div>
       <div class="row center gap-8">
         <span id="user-info" class="muted"></span>
@@ -34,7 +26,7 @@
         <button id="btn-logout" class="btn ghost hidden">Logout</button>
       </div>
     </div>
-    <nav class="tabs container" role="tablist">
+    <nav class="tabs container">
       <button class="tab active" data-tab="dashboard">Dashboard</button>
       <button class="tab" data-tab="players">Players</button>
       <button class="tab" data-tab="matches">Matches</button>
@@ -43,9 +35,7 @@
     </nav>
   </header>
 
-  <!-- MAIN -->
   <main class="container">
-
     <!-- DASHBOARD -->
     <section id="view-dashboard" class="view active">
       <div class="card">
@@ -61,10 +51,7 @@
       </div>
 
       <div class="card">
-        <div class="row between center wrap">
-          <h3>Team Stats</h3>
-          <div class="muted" style="font-size:12px">Winrates & Deck-Verteilung</div>
-        </div>
+        <h3>Team Stats</h3>
         <div class="grid-2">
           <canvas id="chart-winrates" height="220"></canvas>
           <canvas id="chart-decks" height="220"></canvas>
@@ -88,9 +75,7 @@
       </div>
       <div class="card">
         <table id="players-table">
-          <thead>
-            <tr><th>Name</th><th>Record</th><th>Win %</th><th>Decks</th><th>Top 8</th><th></th></tr>
-          </thead>
+          <thead><tr><th>Name</th><th>Record</th><th>Win %</th><th>Decks</th><th>Top 8</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -104,14 +89,12 @@
           <form id="match-form" class="form-grid">
             <input type="date" id="m-date" />
             <select id="m-player"></select>
-            <input type="text" id="m-deck" placeholder="Deck-Name" />
+            <input type="text" id="m-deck" placeholder="Deck" />
             <input type="text" id="m-opp" placeholder="Gegner" />
             <select id="m-res">
-              <option value="W">Win</option>
-              <option value="L">Loss</option>
-              <option value="D">Draw</option>
+              <option value="W">Win</option><option value="L">Loss</option><option value="D">Draw</option>
             </select>
-            <input type="text" id="m-event" placeholder="Event (optional)" />
+            <input type="text" id="m-event" placeholder="Event" />
             <button type="submit" class="btn">Speichern</button>
           </form>
         </div>
@@ -138,7 +121,7 @@
             <input type="text" id="ev-name" placeholder="Event-Name" required />
             <input type="date" id="ev-date" required />
             <input type="text" id="ev-loc" placeholder="Ort" required />
-            <input type="text" id="ev-type" placeholder="Typ (z. B. Regional)" />
+            <input type="text" id="ev-type" placeholder="Typ" />
             <button type="submit" class="btn">Speichern</button>
           </form>
         </div>
@@ -149,7 +132,7 @@
             <button class="btn ghost" id="export-events">Export Events (CSV)</button>
           </div>
           <table id="events-table">
-            <thead><tr><th>Date</th><th>Name</th><th>Location</th><th>Type</th></tr></thead>
+            <thead><tr><th>Date</th><th>Name</th><th>Location</th><th>Type</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -162,7 +145,7 @@
         <div class="card" id="sponsor-form-card">
           <h3>Sponsor hinzufügen</h3>
           <form id="sponsor-form" class="form-grid">
-            <input type="text" id="sp-name" placeholder="Sponsor-Name" required />
+            <input type="text" id="sp-name" placeholder="Sponsor" required />
             <input type="url" id="sp-url" placeholder="https://…" />
             <button type="submit" class="btn">Speichern</button>
           </form>
@@ -179,29 +162,26 @@
     </section>
   </main>
 
-  <!-- MODAL -->
   <dialog id="player-modal">
     <form id="player-form" method="dialog" class="modal">
       <h3>Neuer Player</h3>
       <input id="p-name" type="text" placeholder="Name" required />
       <input id="p-decks" type="text" placeholder="Decks (kommagetrennt)" />
       <div class="row end gap-8">
-        <button class="btn ghost" value="cancel" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
-        <button class="btn" value="default" type="submit">Speichern</button>
+        <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button class="btn" type="submit">Speichern</button>
       </div>
     </form>
   </dialog>
 
-  <!-- FOOTER -->
   <footer class="footer">
     <div class="container row between center wrap" style="padding:16px 0;">
       <div class="muted">© MANIACS · TCG</div>
       <div class="cta row" style="gap:10px">
-        <a href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener">Discord</a>
+        <a href="https://www.instagram.com/maniacs_tcg/" target="_blank">Instagram</a>
+        <a href="https://mee6.xyz/i/8ldFNhRQch" target="_blank">Discord</a>
       </div>
     </div>
   </footer>
-
 </body>
 </html>
