@@ -260,7 +260,7 @@ dialog{
 /* Streak Leader kleiner als andere KPIs */
 .kpi-box .kpi-value.streak {
   color: #e33;
-  font-size: 28px;   /* kleiner als die 36px der anderen KPIs */
+  font-size: 25px;   /* kleiner als die 36px der anderen KPIs */
   font-weight: 700;  /* etwas leichter, nicht so massiv */
 }
 @media (max-width:700px){
