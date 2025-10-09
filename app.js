@@ -45,13 +45,35 @@ if (window.__MANIACS_INIT__) {
     try{await getDoc(docRef('meta','adminProbe'));return true;}
     catch{return false;}
   }
-  function applyAdminUI(isAdmin){
-    isAdminUI=isAdmin;
-    $('#sponsor-form')?.classList.toggle('hidden',!isAdmin);
-    $('#sponsor-form-card')?.classList.toggle('hidden',!isAdmin);
-    $('#btn-open-player')?.classList.toggle('hidden',!isAdmin);
-    $('#role-badge')?.classList.toggle('hidden',!isAdmin);
+function applyAdminUI(isAdmin){
+  isAdminUI = isAdmin;
+  $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
+  $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
+  $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+  $('#role-badge')?.classList.toggle('hidden', !isAdmin);
+
+  // 🔥 NEU: Tabellen sofort neu rendern, wenn Adminstatus sich ändert
+  const playersTable = document.querySelector('#players-table tbody');
+  const matchesTable = document.querySelector('#matches-table tbody');
+  if (playersTable && playersTable.innerHTML) {
+    playersTable.querySelectorAll('tr').forEach(tr => {
+      const delBtn = tr.querySelector('[data-del-p]');
+      if (!delBtn && isAdmin) {
+        const id = tr.dataset?.id || ''; // falls du data-id später brauchst
+        tr.insertAdjacentHTML('beforeend', `<td><button class="btn ghost" data-del-p="${id}">Löschen</button></td>`);
+      }
+    });
   }
+  if (matchesTable && matchesTable.innerHTML && isAdmin) {
+    matchesTable.querySelectorAll('tr').forEach(tr => {
+      const delBtn = tr.querySelector('[data-del-match]');
+      if (!delBtn && isAdmin) {
+        const id = tr.dataset?.id || '';
+        tr.insertAdjacentHTML('beforeend', `<td><button class="btn ghost" data-del-match="${id}">Löschen</button></td>`);
+      }
+    });
+  }
+}
 
   /* ---------- Auth ---------- */
   $('#login-form')?.addEventListener('submit',async e=>{
