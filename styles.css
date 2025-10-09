@@ -185,3 +185,34 @@ dialog{
   .card{ padding:14px; border-radius:18px; }
   .pill{ font-size:13px; padding:5px 9px; }
 }
+
+/* Utilities for gaps used in header */
+.gap-8{ gap:8px; }
+.gap-12{ gap:12px; }
+
+/* Header: exakt wie am Anfang – kleineres Logo, Titel daneben */
+.app-header .container{ padding-top:10px; padding-bottom:8px; }
+.app-header .logo img{ height:34px; display:block; }           /* <— kleineres Logo */
+.app-header .app-title{
+  margin:0; font-weight:800; letter-spacing:.5px; font-size:20px; line-height:1;
+}
+
+/* Tabs direkt unter Header, ohne zusätzlichen Rand/Hintergrund */
+.app-header .tabs{ padding-top:6px; padding-bottom:10px; }
+
+/* Falls Tabs schon definiert sind, behalten – nur sicherstellen: kein Rahmen-Container */
+.tabs{
+  display:flex; gap:6px; padding:6px 0; border:none; background:none;
+}
+.tab{
+  background:none; border:none; color:#fff; font-weight:600; font-size:15px;
+  padding:10px 14px; border-radius:10px; cursor:pointer; transition:background .2s;
+}
+.tab:hover{ background:rgba(255,255,255,.08); }
+.tab.active{ background:var(--brand); color:#fff; }
+
+/* Mobile Feinschliff */
+@media (max-width:720px){
+  .app-header .logo img{ height:28px; }                        /* noch etwas kleiner auf Mobile */
+  .app-header .app-title{ font-size:18px; }
+}
