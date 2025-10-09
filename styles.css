@@ -17,7 +17,7 @@ html,body{
   color:var(--txt);
   font:15px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif;
   max-width:100%;
-  overflow-x:hidden; /* keine horizontale Scrollleiste */
+  overflow-x:hidden;
 }
 
 a{ color:inherit; text-decoration:none; }
@@ -111,7 +111,7 @@ tbody td{
 
 .muted{ color:var(--muted); }
 
-/* Tabs – „wie am Anfang“: clean, ohne Rahmenplatte */
+/* Tabs */
 .tabs{
   display:flex;
   gap:6px;
@@ -133,7 +133,7 @@ tbody td{
 .tab:hover{ background:rgba(255,255,255,.08); }
 .tab.active{ background:var(--brand); color:#fff; }
 
-/* Views-Schaltung */
+/* Views */
 .view{ display:none; }
 .view.active{ display:block; }
 
@@ -161,7 +161,7 @@ dialog{
   color:#fff;
 }
 
-/* Read-only: rechte Listen mittig, wenn ausgeloggt */
+/* Read-only */
 .readonly #matches-list-card,
 .readonly #events-list-card{
   max-width:980px;
@@ -186,41 +186,29 @@ dialog{
   .pill{ font-size:13px; padding:5px 9px; }
 }
 
-/* Utilities for gaps used in header */
+/* Utilities */
 .gap-8{ gap:8px; }
 .gap-12{ gap:12px; }
 
-/* Header: exakt wie am Anfang – kleineres Logo, Titel daneben */
+/* Header */
 .app-header .container{ padding-top:10px; padding-bottom:8px; }
-.app-header .logo img{ height:34px; display:block; }           /* <— kleineres Logo */
+.app-header .logo img{ height:34px; display:block; }
 .app-header .app-title{
-  margin:0; font-weight:800; letter-spacing:.5px; font-size:20px; line-height:1;
+  margin:0; font-weight:800; letter-spacing:.5px; font-size:24px; line-height:1;
 }
-
-/* Tabs direkt unter Header, ohne zusätzlichen Rand/Hintergrund */
 .app-header .tabs{ padding-top:6px; padding-bottom:10px; }
-
-/* Falls Tabs schon definiert sind, behalten – nur sicherstellen: kein Rahmen-Container */
-.tabs{
-  display:flex; gap:6px; padding:6px 0; border:none; background:none;
+.app-header .app-title .muted {
+  font-weight:600;
+  color:var(--muted);
+  letter-spacing:1px;
 }
-.tab{
-  background:none; border:none; color:#fff; font-weight:600; font-size:15px;
-  padding:10px 14px; border-radius:10px; cursor:pointer; transition:background .2s;
-}
-.tab:hover{ background:rgba(255,255,255,.08); }
-.tab.active{ background:var(--brand); color:#fff; }
-
-/* Mobile Feinschliff */
 @media (max-width:720px){
-  .app-header .logo img{ height:28px; }                        /* noch etwas kleiner auf Mobile */
-  .app-header .app-title{ font-size:18px; }
+  .app-header .logo img{ height:28px; }
+  .app-header .app-title{ font-size:20px; }
 }
 
-/* Dashboard KPIs: mittig, größer, clean */
-.dashboard-kpis {
-  text-align:center;
-}
+/* Dashboard KPIs */
+.dashboard-kpis { text-align:center; }
 .dashboard-title {
   font-size:1.4rem;
   font-weight:700;
@@ -231,7 +219,7 @@ dialog{
 .kpi-row {
   display:flex;
   justify-content:center;
-  align-items:center;
+  align-items:stretch; /* alle gleich hoch */
   flex-wrap:wrap;
   gap:24px;
 }
@@ -240,6 +228,13 @@ dialog{
   border-radius:16px;
   padding:20px 30px;
   min-width:150px;
+
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:120px; /* gleiche Höhe */
 }
 .kpi-label {
   color:var(--muted);
@@ -252,42 +247,17 @@ dialog{
   color:var(--brand);
   letter-spacing:1px;
 }
+.kpi-box .kpi-value.streak {
+  color:#e33;
+  font-size:inherit; /* gleiche Größe */
+}
 @media (max-width:700px){
   .kpi-row{ gap:16px; }
-  .kpi-box{ padding:16px 20px; }
+  .kpi-box{ padding:16px 20px; min-height:100px; }
   .kpi-value{ font-size:28px; }
 }
 
-.kpi-box .kpi-label {
-  color: #888; /* grau */
-  font-size: 0.9rem;
-}
-
-.kpi-box .kpi-value.streak {
-  color: #e33;   /* rot */
-  font-size: 1.2rem; /* gleiche Größe wie andere Werte */
-}
-
-/* Titel im Header etwas größer und markanter */
-.app-header .app-title {
-  font-size: 24px;         /* vorher 20px */
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  line-height: 1;
-}
-
-@media (max-width:720px){
-  .app-header .app-title{
-    font-size: 20px;       /* leicht kleiner auf Mobile */
-  }
-}
-
-.app-header .app-title .muted {
-  font-weight: 600;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-
+/* Role Badge */
 .role-badge {
   display:inline-flex;
   align-items:center;
@@ -297,76 +267,60 @@ dialog{
   border-radius:999px;
   font-weight:700;
   font-size:13px;
-  background:rgba(227,6,19,.15);        /* soft MANIACS-rot */
+  background:rgba(227,6,19,.15);
   border:1px solid rgba(227,6,19,.35);
   color:#fff;
   user-select:none;
 }
 .hidden { display:none !important; }
 
-/* ------------------------------------------
-   A11y: klarer Tastatur-Fokus (additiv)
------------------------------------------- */
+/* Fokus */
 :where(a, button, [role="button"], input, select, textarea):focus-visible{
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+  outline:2px solid var(--brand);
+  outline-offset:2px;
 }
 
-/* ------------------------------------------
-   Tabs: mobil scroll- & snapbar (additiv)
------------------------------------------- */
+/* Tabs mobil */
 .tabs{
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type:x mandatory;
 }
 .tab{ flex:0 0 auto; scroll-snap-align:start; }
 
-/* ------------------------------------------
-   Tabellen: sichere Scroll-Lösungen (additiv)
-   - Falls Tabellen NICHT in .table-wrap liegen, 
-     mache die Tabelle selbst horizontal scrollfähig.
------------------------------------------- */
 .card > table{
-  /* greift nur, wenn keine .table-wrap vorhanden ist */
   display:block;
   max-width:100%;
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
-  border-spacing:0;                 /* beibehalten */
+  border-spacing:0;
 }
 .card > table thead, 
 .card > table tbody, 
 .card > table tfoot{
-  width:max-content;                /* damit nicht gequetscht wird */
+  width:max-content;
   min-width:100%;
-  display:table;                    /* head/body bleiben Tabellen-Kontext */
+  display:table;
   table-layout:fixed;
 }
 
-/* ------------------------------------------
-   Header: kompakt umbrechen, Badge & Login stacken
------------------------------------------- */
 @media (max-width:980px){
   .app-header .container{ row-gap:10px; }
   .app-header .logo img{ height:32px; }
   .app-header .app-title{ line-height:1.15; }
   #role-badge{ margin-left:0; }
 }
-
 @media (max-width:780px){
-  /* Login-Form stackt */
   #login-form{
     flex-direction:column;
     align-items:stretch;
-    width:min(360px, 100%);
+    width:min(360px,100%);
     gap:8px;
   }
   #login-form input,
   #login-form button{ width:100%; }
   #btn-logout{ width:100%; }
 }
-
 @media (max-width:520px){
   .app-header .logo img{ height:28px; }
   .app-header .app-title{ font-size:18px; }
@@ -374,150 +328,46 @@ dialog{
   #role-badge{ align-self:flex-start; }
 }
 
-/* ------------------------------------------
-   Tabs: kleine Bildschirme -> besser greifbar
------------------------------------------- */
-@media (max-width:520px){
-  .tabs{ gap:4px; }
-  .tab{ padding:10px 12px; }
-}
-@media (max-width:400px){
-  .tab{ padding:9px 10px; font-size:14px; }
-}
+/* Admin */
+.admin-only { display:none; }
+.is-admin .admin-only { display:inline-flex; }
 
-/* ------------------------------------------
-   Grids/Formulare: Stack & Touch-Targets
------------------------------------------- */
-@media (max-width:980px){
-  .grid-2{ grid-template-columns:1fr; }
-  .mx-center{ margin-left:0; margin-right:0; }
-}
-
-@media (max-width:780px){
-  .form-grid{ grid-template-columns:1fr; }
-  .form-grid > *{ min-width:0; } /* Inputs dürfen schrumpfen */
-  .form-grid button[type="submit"]{ width:100%; }
-}
-
-@media (max-width:520px){
-  input,select,button{ min-height:48px; } /* größere Touch-Ziele */
-}
-
-/* ------------------------------------------
-   KPI-Kacheln: Wrap & kompakter unter 780/520
------------------------------------------- */
-@media (max-width:780px){
-  .kpi-row{ gap:16px; }
-  .kpi-box{ padding:16px 18px; }
-  .kpi-value{ font-size:28px; }
-}
-@media (max-width:520px){
-  .kpi-box{ min-width:130px; padding:14px 16px; }
-  .kpi-label{ font-size:14px; }
-  .kpi-value{ font-size:24px; }
-}
-
-/* ------------------------------------------
-   Tabellen: Kopfzeile sticky auf kleinen Screens
-   (nur optisches Plus, funktioniert in den scrollbaren Containern)
------------------------------------------- */
-@media (max-width:980px){
-  table thead th{
-    position:sticky;
-    top:0;
-    background:var(--card);
-    z-index:1;
-  }
-}
-
-/* ------------------------------------------
-   Footer-Buttons: auf Mobile full-width gruppiert
------------------------------------------- */
-@media (max-width:520px){
-  .social-buttons{ width:100%; justify-content:space-between; }
-  .social-btn{ flex:1 1 auto; }
-}
-
-/* ------------------------------------------
-   Zusätzliche Utilities (nicht-destruktiv)
------------------------------------------- */
-@media (max-width:520px){
-  .stack-sm{ display:flex; flex-direction:column; gap:8px; }
-  .full-sm{ width:100% !important; }
-}
-
-/* ===== Rotate Overlay (zentrierter Banner + Blur) ===== */
-
-/* Vollbild-Overlay: zentriert, mit Blur dahinter */
+/* Rotate Overlay */
 #rotate-tip.rotate-overlay{
-  position: fixed;
-  inset: 0;
-  display: none;                 /* sichtbar via .show */
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  /* dunkler Film + Blur */
-  background: rgba(0,0,0,.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 24px;
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:24px;
 }
-
-/* Card in der Mitte */
 #rotate-tip .rotate-card{
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  max-width: 92vw;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(18,22,30,.95);
-  border: 1px solid rgba(255,255,255,.12);
-  color: #fff;
-  box-shadow: 0 8px 30px rgba(0,0,0,.35);
-  transform: translateY(-4px) scale(.98);
-  opacity: 0;
-  animation: rotateCardIn .22s ease-out forwards;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  max-width:92vw;
+  padding:14px 16px;
+  border-radius:14px;
+  background:rgba(18,22,30,.95);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;
+  box-shadow:0 8px 30px rgba(0,0,0,.35);
+  transform:translateY(-4px) scale(.98);
+  opacity:0;
+  animation:rotateCardIn .22s ease-out forwards;
 }
-
-/* Icon */
-#rotate-tip .rotate-icon{
-  font-size: 22px;
-  line-height: 1;
-  opacity: .95;
-  filter: drop-shadow(0 0 2px rgba(255,255,255,.2));
-}
-
-/* Text */
-#rotate-tip .rotate-text{
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 1.35;
-}
-#rotate-tip .rotate-text strong{
-  font-weight: 800;
-}
-
-/* Sichtbarkeit */
-#rotate-tip.show{ display: flex; }
-
-/* dezente Intro-Animation */
-@keyframes rotateCardIn{
-  to{ transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* Weniger Bewegung, wenn gewünscht */
+#rotate-tip .rotate-icon{ font-size:22px; line-height:1; opacity:.95; }
+#rotate-tip .rotate-text{ font-weight:600; font-size:16px; line-height:1.35; }
+#rotate-tip .rotate-text strong{ font-weight:800; }
+#rotate-tip.show{ display:flex; }
+@keyframes rotateCardIn{ to{ transform:translateY(0) scale(1); opacity:1; } }
 @media (prefers-reduced-motion: reduce){
-  #rotate-tip .rotate-card{ animation: none; opacity: 1; transform: none; }
+  #rotate-tip .rotate-card{ animation:none; opacity:1; transform:none; }
 }
-
-/* Desktop niemals zeigen (Schutz ≥ 1100px) */
 @media (min-width:1100px){
-  #rotate-tip{ display: none !important; }
+  #rotate-tip{ display:none !important; }
 }
-
-/* Admin-Elemente standardmäßig ausblenden */
-.admin-only { display: none; }
-
-/* Sobald Admin erkannt -> sichtbar (inline-flex passt zu Buttons, kann auch inline-block sein) */
-.is-admin .admin-only { display: inline-flex; }
