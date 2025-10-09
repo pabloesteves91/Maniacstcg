@@ -1,10 +1,10 @@
-// MANIACS · COMPETE — app.js (FINAL)
-// - Init-Guard
-// - Admin via rules-probe (read /meta/adminProbe)
-// - Live-Rendering + Caches (Buttons sofort korrekt nach Admin-Wechsel)
-// - iOS/Safari-sicheres Player-Dropdown im Match-Form
-// - Form-Debounce, keine Tab-Sprünge, sauberes Reset
-// - CSV-Exporte
+// MANIACS · COMPETE — app.js (stable final)
+// - admin via rules-probe
+// - init-guard
+// - live re-render on admin change
+// - submit debouncing
+// - separate dashboard "Last Matches" render
+// - fixes for initial delete buttons & dropdown
 
 import {
   loginEmail, logout, onUser,
@@ -21,10 +21,9 @@ if (window.__MANIACS_INIT__) {
   /* ------------------ Helpers ------------------ */
   const $  = (s)=>document.querySelector(s);
   const $$ = (s)=>[...document.querySelectorAll(s)];
-
   function setActiveTab(id){
     $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
-    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
+    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`)); // <-- fixed template literal
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
@@ -33,23 +32,28 @@ if (window.__MANIACS_INIT__) {
     const tip = document.getElementById('rotate-tip');
     if(!tip) return;
     const mqPortrait = window.matchMedia('(orientation: portrait)');
-    const mqSmall    = window.matchMedia('(max-width: 700px)');
-    const update = ()=>{
+    const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
+
+    function updateRotateTip(){
       const show = mqSmall.matches && mqPortrait.matches;
       tip.classList.toggle('show', show);
-      tip.setAttribute('aria-hidden', show ? 'false' : 'true');
-    };
-    update();
-    const onCh = ()=>setTimeout(update, 50);
-    (mqPortrait.addEventListener||mqPortrait.addListener).call(mqPortrait,'change',onCh);
-    (mqSmall.addEventListener||mqSmall.addListener).call(mqSmall,'change',onCh);
-    window.addEventListener('resize', update, { passive:true });
-    window.addEventListener('orientationchange', ()=>setTimeout(update, 100), { passive:true });
-    document.addEventListener('visibilitychange', update);
+    }
+    updateRotateTip();
+    const onPortrait = ()=>updateRotateTip();
+    const onSmall = ()=>updateRotateTip();
+    if (mqPortrait.addEventListener) mqPortrait.addEventListener('change', onPortrait);
+    else mqPortrait.addListener && mqPortrait.addListener(onPortrait);
+    if (mqSmall.addEventListener) mqSmall.addEventListener('change', onSmall);
+    else mqSmall.addListener && mqSmall.addListener(onSmall);
+    window.addEventListener('resize', updateRotateTip, { passive:true });
   })();
 
   /* ------------------ CSV helpers ------------------ */
-  function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; }
+  function csvEscape(v){
+    if(v==null) return '';
+    const s=String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }
   function toCSV(rows, order){
     const bom='\uFEFF';
     const headers = order || Object.keys(rows[0]||{});
@@ -68,7 +72,7 @@ if (window.__MANIACS_INIT__) {
   let currentUser = null;
   let isAdminUI = false;
 
-  // Caches für sofortiges Re-Rendern nach Admin-Wechsel
+  // Caches der letzten Snapshots, damit UI sofort auf Admin-Wechsel reagieren kann
   let cachePlayers = [];
   let cacheMatches = [];
   let cacheEvents  = [];
@@ -77,20 +81,24 @@ if (window.__MANIACS_INIT__) {
   async function checkAdminViaRulesProbe(user){
     if (!user) return false;
     try {
-      await getDoc(docRef('meta', 'adminProbe')); // nur Admins dürfen das lesen
-      return true;
+      // Laut Rules dürfen nur Admins /meta/adminProbe lesen.
+      await getDoc(docRef('meta', 'adminProbe'));
+      return true; // Read erlaubt => Admin
     } catch {
-      return false;
+      return false; // permission-denied => kein Admin
     }
   }
 
   function applyAdminUI(isAdmin){
     isAdminUI = isAdmin;
+    // Admin-spezifische UI
     $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
     $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
     $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
-    document.getElementById('role-badge')?.classList.toggle('hidden', !isAdmin);
-    // Re-render, damit Delete-Buttons sofort korrekt sind
+    // 👑 Badge
+    const badge = document.getElementById('role-badge');
+    if (badge) badge.classList.toggle('hidden', !isAdmin);
+    // Re-render mit Caches, damit Delete-Buttons sofort sichtbar/unsichtbar werden
     renderPlayers(cachePlayers);
     renderMatches(cacheMatches);
     renderEvents(cacheEvents);
@@ -113,19 +121,25 @@ if (window.__MANIACS_INIT__) {
   onUser(async (user)=>{
     currentUser = user || null;
 
+    // Header UI
     $('#user-info').textContent = user ? user.email : '';
     $('#btn-logout')?.classList.toggle('hidden', !user);
     $('#login-form')?.classList.toggle('hidden', !!user);
 
-    // Read-only Layout
+    // Badge beim Ausloggen sicher verstecken (bis Admin bestimmt ist)
+    document.getElementById('role-badge')?.classList.toggle('hidden', !user);
+
+    // Read-only Layout: linke Karten verstecken, rechte Karte mittig
     const isLoggedIn = !!user;
     document.body.classList.toggle('readonly', !isLoggedIn);
+
+    // Matches / Events Formular nur für Eingeloggte
     $('#matches-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#matches-list-card')?.classList.toggle('mx-center', !isLoggedIn);
     $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
-    // Admin via Rules
+    // Admin nur über Rules bestimmen
     const admin = await checkAdminViaRulesProbe(user);
     applyAdminUI(admin);
   });
@@ -151,16 +165,19 @@ if (window.__MANIACS_INIT__) {
     if(submitting.player) return;
     if(!currentUser) return alert('Login erforderlich.');
     if(!isAdminUI)   return alert('Nur Admins dürfen Players speichern.');
+
     const btn = e.submitter || $('#player-form button[type="submit"]');
     try{
       submitting.player = true;
       btn?.setAttribute('disabled','disabled');
-      const name = ($('#p-name')?.value||'').trim();
-      const decks = (($('#p-decks')?.value)||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+      const name=$('#p-name').value.trim();
+      const decks=$('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean);
       if(!name) return;
+
       await addDoc(col(C_PLAYERS), {name,wins:0,losses:0,draws:0,top8:0,decks});
       e.target.reset();
-      playerModal?.close?.();
+      playerModal.close?.();
     } finally {
       submitting.player = false;
       btn?.removeAttribute('disabled');
@@ -169,54 +186,11 @@ if (window.__MANIACS_INIT__) {
 
   /* ------------------ RENDERERS ------------------ */
 
-  // --- Players & Dropdown ---
-  const mPlayerSelect = $('#m-player');
-  const playersTBody  = $('#players-table tbody');
-
-  function fillPlayerSelect(playersDocs){
-    if (!mPlayerSelect) return;
-
-    const prev = mPlayerSelect.value;
-    let html = '<option value="">– Player wählen –</option>';
-    playersDocs.forEach(d=>{
-      const p = d.data() || {};
-      const name = (p.name || '').trim() || 'Unbenannt';
-      html += `<option value="${d.id}" data-name="${name}">${name}</option>`;
-    });
-    mPlayerSelect.innerHTML = html;
-
-    if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
-      mPlayerSelect.value = prev;
-    } else if (playersDocs.length === 1) {
-      mPlayerSelect.value = playersDocs[0].id;
-    } else {
-      mPlayerSelect.value = "";
-    }
-
-    // iOS/Safari: sichere Klickbarkeit & native UI
-    mPlayerSelect.disabled = false;
-    mPlayerSelect.style.webkitAppearance = 'menulist-button';
-    mPlayerSelect.style.appearance = 'menulist';
-    mPlayerSelect.style.pointerEvents = 'auto';
-    mPlayerSelect.style.position = 'relative';
-    mPlayerSelect.style.zIndex = '5';
-
-    setTimeout(()=>{
-      const sel = mPlayerSelect.options[mPlayerSelect.selectedIndex] || null;
-      mPlayerSelect.dataset.selectedName = sel ? (sel.dataset.name || sel.textContent || "") : "";
-      mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
-    }, 0);
-
-    const openNativePicker = () => { try{ mPlayerSelect.focus(); }catch{} try{ mPlayerSelect.click(); }catch{} };
-    if (!mPlayerSelect.__wiredTap) {
-      mPlayerSelect.addEventListener('touchstart', openNativePicker, { passive:true });
-      mPlayerSelect.addEventListener('pointerdown', openNativePicker, { passive:true });
-      mPlayerSelect.__wiredTap = true;
-    }
-  }
-
+  // Players
   function renderPlayers(docs){
     cachePlayers = docs;
+    const playersTBody = $('#players-table tbody');
+    const mPlayerSelect = $('#m-player');
 
     if (playersTBody) {
       const rows=[]; let tw=0, t8=0;
@@ -224,22 +198,34 @@ if (window.__MANIACS_INIT__) {
         const p={id:d.id, ...d.data()};
         const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
         const pct=g?Math.round((p.wins||0)/g*100):0;
-        rows.push(`
-          <tr data-id="${p.id}">
-            <td>${p.name||''}</td>
-            <td>${p.wins||0}-${p.losses||0}-${p.draws||0} <span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-            <td>${p.top8||0}</td>
+        rows.push(
+          `<tr data-id="${p.id}">
+            <td>${p.name}</td>
+            <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
+            <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
             <td>${(p.decks||[]).join(', ')}</td>
+            <td>${p.top8||0}</td>
             <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
-          </tr>
-        `);
+          </tr>`
+        );
         tw+=(p.wins||0); t8+=(p.top8||0);
       });
       playersTBody.innerHTML = rows.join('');
-      $('#kpi-players') && ($('#kpi-players').textContent = docs.length);
-      $('#kpi-wins')    && ($('#kpi-wins').textContent = tw);
-      $('#kpi-top8')    && ($('#kpi-top8').textContent = t8);
+      $('#kpi-players').textContent = docs.length;
+      $('#kpi-wins').textContent = tw;
+      $('#kpi-top8').textContent = t8;
 
+      // Team-Top8 Summary (Dashboard)
+      const teamSummaryEl = document.getElementById('team-summary');
+      if (teamSummaryEl) {
+        const existing = teamSummaryEl.querySelector('[data-stat="top8"]');
+        const li = existing || document.createElement('li');
+        li.setAttribute('data-stat','top8');
+        li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${t8}`;
+        if (!existing) teamSummaryEl.appendChild(li);
+      }
+
+      // Delete Buttons
       if (isAdminUI) {
         document.querySelectorAll('[data-del-p]').forEach(b=>{
           b.onclick = async ()=>{
@@ -252,11 +238,18 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-    // entscheidend: Dropdown befüllen
-    fillPlayerSelect(docs);
+    // Matches-Form: Player Dropdown
+    if (mPlayerSelect) {
+      const opts=[];
+      docs.forEach(d=>{
+        const p=d.data();
+        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
+      });
+      mPlayerSelect.innerHTML = opts.join('');
+    }
   }
 
-  // --- Matches ---
+  // Matches
   function tierToText(code){
     switch(code){
       case 'L': return 'Local';
@@ -278,14 +271,14 @@ if (window.__MANIACS_INIT__) {
       const latest=[]; const maxRows=6;
       for (const d of docs) {
         const m=d.data();
-        latest.push(`
-          <tr>
+        latest.push(
+          `<tr>
             <td>${m.player || ''}</td>
             <td>${m.deck || ''}</td>
             <td>${m.opp  || ''}</td>
             <td>${m.res  || ''}</td>
-          </tr>
-        `);
+          </tr>`
+        );
         if (latest.length>=maxRows) break;
       }
       latestTBody.innerHTML = latest.length
@@ -330,7 +323,7 @@ if (window.__MANIACS_INIT__) {
         });
       }
 
-      // Team summary (falls vorhanden)
+      // Team summary on dashboard (W/L/D + Top-Deck), wenn vorhanden
       const teamSummaryEl = document.getElementById('team-summary');
       const topDeckEl     = document.getElementById('top-deck-list');
       if (teamSummaryEl) {
@@ -357,7 +350,7 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  // --- Events ---
+  // Events
   function renderEvents(docs){
     cacheEvents = docs;
     const eventsBody = $('#events-table tbody');
@@ -388,7 +381,7 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  // --- Sponsors ---
+  // Sponsors
   function renderSponsors(docs){
     cacheSponsors = docs;
     const sponsList = $('#sponsor-list');
@@ -421,22 +414,26 @@ if (window.__MANIACS_INIT__) {
 
   /* ------------------ Snapshots (live) ------------------ */
   onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
-    const docs = []; snap.forEach(d=>docs.push(d));
+    const docs = [];
+    snap.forEach(d=>docs.push(d));
     renderPlayers(docs);
   });
 
   onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
-    const docs = []; snap.forEach(d=>docs.push(d));
+    const docs = [];
+    snap.forEach(d=>docs.push(d));
     renderMatches(docs);
   });
 
   onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
-    const docs = []; snap.forEach(d=>docs.push(d));
+    const docs = [];
+    snap.forEach(d=>docs.push(d));
     renderEvents(docs);
   });
 
   onSnapshot(col(C_SPONS), (snap)=>{
-    const docs = []; snap.forEach(d=>docs.push(d));
+    const docs = [];
+    snap.forEach(d=>docs.push(d));
     renderSponsors(docs);
   });
 
@@ -452,10 +449,8 @@ if (window.__MANIACS_INIT__) {
       if(m.deck) decksSet.add(String(m.deck).trim());
     });
     const pRef = docRef(C_PLAYERS, playerId);
-
-    // bestehende Felder beibehalten
-    const playersSnap = await getDocs(query(col(C_PLAYERS)));
-    for (const d of playersSnap.docs) {
+    const playerDocs = await getDocs(query(col(C_PLAYERS)));
+    for (const d of playerDocs.docs) {
       if (d.id === playerId) {
         const p = d.data();
         await setDoc(pRef, { ...p, wins, losses, draws, decks: [...decksSet] });
@@ -466,21 +461,14 @@ if (window.__MANIACS_INIT__) {
   /* ------------------ Forms ------------------ */
   $('#match-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
+    e.stopPropagation();
     if(submitting.match) return;
     if(!currentUser) return alert('Login erforderlich.');
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
-    const sel = $('#m-player');
-    const opt = sel?.options[sel?.selectedIndex || 0];
-    const playerId   = opt?.value || "";
-    const playerName = (opt?.dataset?.name || opt?.textContent || "").trim();
-
-    if (!playerId) {
-      alert('Bitte zuerst einen Player wählen.');
-      sel?.focus();
-      return;
-    }
-
+    const opt=$('#m-player')?.selectedOptions?.[0];
+    const playerId=opt?.value || '';
+    const playerName=opt?.dataset.name || '';
     const m={
       date: $('#m-date').value || new Date().toISOString().slice(0,10),
       playerId, player:playerName,
@@ -490,17 +478,13 @@ if (window.__MANIACS_INIT__) {
       tier: $('#m-tier').value,
       event: $('#m-event').value.trim()
     };
-
     try{
       submitting.match = true;
       btn?.setAttribute('disabled','disabled');
       await addDoc(col(C_MATCHES), m);
       if (playerId) await recomputePlayerStats(playerId);
-      e.target.reset();                 // auf dem Tab bleiben
-      if (sel) {                        // Platzhalter wieder setzen
-        sel.selectedIndex = 0;
-        sel.dispatchEvent(new Event('change', { bubbles:true }));
-      }
+      // Formular leeren, aber auf dem Tab bleiben
+      e.target.reset();
     } finally {
       submitting.match = false;
       btn?.removeAttribute('disabled');
