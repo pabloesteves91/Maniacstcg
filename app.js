@@ -1,12 +1,13 @@
-// MANIACS · COMPETE — app.js (final with recompute on match add/delete)
+// MANIACS · COMPETE — app.js (final, ohne 'where'-Import)
 
+// ----- Firebase Re-exports aus deiner firebase.js -----
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
-  query, orderBy, deleteDoc, where
+  query, orderBy, deleteDoc
 } from './firebase.js';
 
-/* ------------------ Helpers ------------------ */
+// ------------------ Helpers ------------------
 const $  = (s)=>document.querySelector(s);
 const $$ = (s)=>[...document.querySelectorAll(s)];
 function setActiveTab(id){
@@ -17,7 +18,7 @@ $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)
 
 const OWNER_EMAIL = "fabioberta@me.com";
 
-/* ---------- CSV helpers ---------- */
+// ---------- CSV helpers ----------
 function csvEscape(v){ if(v==null) return ''; const s=String(v); return /[",\n;]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; }
 function toCSV(rows, order){
   const bom='\uFEFF';
@@ -33,7 +34,7 @@ function downloadCSV(filename, rows, order){
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
-/* ------------------ Auth ------------------ */
+// ------------------ Auth ------------------
 $('#login-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const email=$('#login-email').value.trim(); const pass=$('#login-pass').value;
@@ -63,19 +64,17 @@ onUser(async (user)=>{
   $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
   $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
-  // Sponsors (Form nur Owner)
+  // Owner-Bereiche
   const isOwner = !!(user && user.email===OWNER_EMAIL);
   $('#sponsor-form')?.classList.toggle('hidden', !isOwner);
   $('#sponsor-form-card')?.classList.toggle('hidden', !isOwner);
-
-  // Players (+Player Button nur Owner sichtbar – Speichern serverseitig geschützt)
   $('#btn-open-player')?.classList.toggle('hidden', !isOwner);
 });
 
-/* ------------------ Collections ------------------ */
+// ------------------ Collections ------------------
 const C_PLAYERS='players', C_MATCHES='matches', C_EVENTS='events', C_SPONS='sponsors';
 
-/* ------------------ Player Modal (wie am Anfang) ------------------ */
+// ------------------ Player Modal (wie am Anfang) ------------------
 const playerModal = $('#player-modal');
 function openPlayerModal(){
   if(!currentUser) return alert('Bitte zuerst einloggen.');
@@ -96,11 +95,11 @@ $('#player-form').addEventListener('submit', async (e)=>{
   playerModal.close?.();
 });
 
-/* ------------------ Team Stats Targets (text) ------------------ */
+// ------------------ Team Stats Targets (text) ------------------
 const teamSummaryEl = document.getElementById('team-summary');   // UL
 const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
-/* ------------------ Players ------------------ */
+// ------------------ Players ------------------
 let _playersCache=[]; let _deckCounts={};
 const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
 
@@ -148,7 +147,7 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   }));
 });
 
-/* ------------------ Matches ------------------ */
+// ------------------ Matches ------------------
 function tierToText(code){
   switch(code){
     case 'L': return 'Local';
@@ -161,19 +160,26 @@ function tierToText(code){
   }
 }
 
-/* Recompute: berechnet W/L/D + Decks für einen Player aus seinen Matches */
+/** Recompute: berechnet W/L/D + Decks für einen Player aus *allen* Matches
+ *  (ohne 'where' – wir filtern clientseitig)
+ */
 async function recomputePlayerStats(playerId){
   if(!playerId) return;
-  const ms = await getDocs(query(col(C_MATCHES), where('playerId','==',playerId)));
+
+  // Alle Matches laden und clientseitig filtern
+  const allMatchesSnap = await getDocs(query(col(C_MATCHES), orderBy('date','desc')));
   let wins=0, losses=0, draws=0;
   const decksSet = new Set();
-  ms.forEach(doc=>{
+
+  allMatchesSnap.forEach(doc=>{
     const m = doc.data();
+    if (m.playerId !== playerId) return;
     if(m.res==='W') wins++;
     else if(m.res==='L') losses++;
     else if(m.res==='D') draws++;
     if(m.deck) decksSet.add(String(m.deck).trim());
   });
+
   // Player-Dokument finden und aktualisieren
   const allPlayers = await getDocs(query(col(C_PLAYERS)));
   allPlayers.forEach(async d=>{
@@ -199,8 +205,7 @@ $('#match-form').addEventListener('submit', async (e)=>{
     event: $('#m-event').value.trim()
   };
   await addDoc(col(C_MATCHES), m);
-  // Nach dem Anlegen: Stats aus allen Matches neu berechnen
-  if (playerId) await recomputePlayerStats(playerId);
+  if (playerId) await recomputePlayerStats(playerId);  // nach Add neu berechnen
   e.target.reset();
 });
 
@@ -253,19 +258,17 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
     if(currentUser.email !== OWNER_EMAIL) return;
     const pid = b.dataset.playerId || '';
     await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
-    if (pid) await recomputePlayerStats(pid);
+    if (pid) await recomputePlayerStats(pid);  // nach Delete neu berechnen
   }));
 
   // --- Team Summary rendern (W/L/D + Top8 aus Players) ---
   if (teamSummaryEl) {
-    // Team Record
     const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
     const wlLi = wlExisting || document.createElement('li');
     wlLi.setAttribute('data-stat','wld');
     wlLi.innerHTML = `<strong>Team Record</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
     if (!wlExisting) teamSummaryEl.appendChild(wlLi);
 
-    // Sicherstellen, dass Top8-Zeile existiert (Players-Snapshot setzt sie normalerweise)
     if (!teamSummaryEl.querySelector('[data-stat="top8"]')) {
       const top8Li = document.createElement('li');
       top8Li.setAttribute('data-stat','top8');
@@ -293,7 +296,7 @@ onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
   }
 });
 
-/* ------------------ Events ------------------ */
+// ------------------ Events ------------------
 $('#event-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -331,7 +334,7 @@ onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
   }));
 });
 
-/* ------------------ Sponsors ------------------ */
+// ------------------ Sponsors ------------------
 $('#sponsor-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
@@ -364,7 +367,7 @@ onSnapshot(col(C_SPONS), (snap)=>{
   }));
 });
 
-/* ------------------ CSV Exports ------------------ */
+// ------------------ CSV Exports ------------------
 $('#export-players')?.addEventListener('click', async ()=>{
   const snap=await getDocs(query(col(C_PLAYERS), orderBy('name'))); const rows=[];
   snap.forEach(d=>{
