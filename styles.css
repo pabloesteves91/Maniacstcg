@@ -254,7 +254,7 @@ dialog{
 
 /* Players leicht größer als die anderen */
 #kpi-players {
-  font-size: 30px;  /* statt 36px, also nur ein Tick größer */
+  font-size: 36px;  /* statt 36px, also nur ein Tick größer */
 }
 
 /* Streak Leader kleiner als andere KPIs */
