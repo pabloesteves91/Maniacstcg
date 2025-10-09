@@ -39,7 +39,6 @@ if (window.__MANIACS_INIT__) {
 
   /* ------------------ Admin via Rules-Probe ------------------ */
   let currentUser = null;
-  if(!user){ document.getElementById('role-badge')?.classList.add('hidden'); }
   let isAdminUI = false;
 
   async function checkAdminViaRulesProbe(user){
@@ -48,23 +47,22 @@ if (window.__MANIACS_INIT__) {
       // Laut Rules dürfen nur Admins /meta/adminProbe lesen.
       await getDoc(docRef('meta', 'adminProbe'));
       return true; // Read erlaubt => Admin
-    } catch (err) {
-      // permission-denied => kein Admin
-      return false;
+    } catch {
+      return false; // permission-denied => kein Admin
     }
   }
 
-function applyAdminUI(isAdmin){
-  isAdminUI = isAdmin;
-  // Admin-spezifische UI
-  $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
-  $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
-  $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+  function applyAdminUI(isAdmin){
+    isAdminUI = isAdmin;
+    // Admin-spezifische UI
+    $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
+    $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
+    $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
 
-  // 👑 Badge
-  const badge = document.getElementById('role-badge');
-  if (badge) badge.classList.toggle('hidden', !isAdmin);
-}
+    // 👑 Badge
+    const badge = document.getElementById('role-badge');
+    if (badge) badge.classList.toggle('hidden', !isAdmin);
+  }
 
   /* ------------------ Auth ------------------ */
   $('#login-form')?.addEventListener('submit', async (e)=>{
@@ -83,15 +81,16 @@ function applyAdminUI(isAdmin){
     $('#btn-logout')?.classList.toggle('hidden', !user);
     $('#login-form')?.classList.toggle('hidden', !!user);
 
+    // Badge beim Ausloggen sicher verstecken
+    document.getElementById('role-badge')?.classList.toggle('hidden', !user);
+
     // Read-only Layout: linke Karten verstecken, rechte Karte mittig
     const isLoggedIn = !!user;
     document.body.classList.toggle('readonly', !isLoggedIn);
 
-    // Matches
+    // Matches / Events Formular nur für Eingeloggte
     $('#matches-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#matches-list-card')?.classList.toggle('mx-center', !isLoggedIn);
-
-    // Events
     $('#events-form-card')?.classList.toggle('hidden', !isLoggedIn);
     $('#events-list-card')?.classList.toggle('mx-center', !isLoggedIn);
 
