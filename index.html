@@ -1,166 +1,170 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>MANIACS · COMPETE</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="theme-color" content="#0b0e13" />
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js?v=3" defer></script>
 </head>
 <body>
-  <header class="app-header">
-    <div class="container row between center wrap">
-      <div class="row center gap-12">
-        <div class="logo"></div>
-        <h1>MANIACS <span class="muted">· COMPETE</span></h1>
-        <span class="badge">Web</span>
-      </div>
-      <div class="row center gap-8" id="auth-area">
-        <span id="user-info" class="muted"></span>
-        <!-- Email/Passwort Login -->
-        <form id="login-form" class="row gap-8" autocomplete="on">
-          <input id="login-email" type="email" placeholder="E‑Mail" required />
-          <input id="login-pass" type="password" placeholder="Passwort" required />
-          <button class="btn" type="submit">Login</button>
-        </form>
-        <button id="btn-logout" class="btn ghost hidden">Logout</button>
-      </div>
+
+  <!-- Header / Login -->
+  <header class="container row between center wrap">
+    <h1>MANIACS · COMPETE</h1>
+    <div class="row center" style="gap:8px">
+      <form id="login-form" class="row center" style="gap:4px">
+        <input id="login-email" type="email" placeholder="E-Mail" required>
+        <input id="login-pass" type="password" placeholder="Passwort" required>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <span id="user-info" class="muted"></span>
+      <button id="btn-logout" class="btn ghost hidden">Logout</button>
     </div>
-    <nav class="tabs container" role="tablist">
-      <button class="tab active" data-tab="dashboard">Dashboard</button>
-      <button class="tab" data-tab="players">Players</button>
-      <button class="tab" data-tab="matches">Matches</button>
-      <button class="tab" data-tab="events">Events</button>
-      <button class="tab" data-tab="sponsors">Sponsors</button>
-    </nav>
   </header>
 
+  <!-- Navigation -->
+  <nav class="tabs container" role="tablist">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="players">Players</button>
+    <button class="tab" data-tab="matches">Matches</button>
+    <button class="tab" data-tab="events">Events</button>
+    <button class="tab" data-tab="sponsors">Sponsors</button>
+  </nav>
+
+  <!-- Views -->
   <main class="container">
+
     <!-- DASHBOARD -->
     <section id="view-dashboard" class="view active">
-      <div class="grid-3">
-        <div class="card">
+      <div class="card">
+        <div class="row between center wrap">
           <h3>Team KPIs</h3>
-          <div class="kpi">
-            <div class="box"><div class="label">Season Wins</div><div class="val" id="kpi-wins">0</div></div>
-            <div class="box"><div class="label">Top 8 Finishes</div><div class="val" id="kpi-top8">0</div></div>
-            <div class="box"><div class="label">Active Players</div><div class="val" id="kpi-players">0</div></div>
-          </div>
+          <button class="btn ghost" id="export-stats">Export KPIs (CSV)</button>
         </div>
-        <div class="card">
-          <h3>Latest Results</h3>
-          <table id="latest-results">
-            <thead><tr><th>Player</th><th>Deck</th><th>VS</th><th>Res</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="card">
-          <h3>Upcoming Events</h3>
-          <table id="events-mini">
-            <thead><tr><th>Datum</th><th>Name</th><th>Ort</th></tr></thead>
-            <tbody></tbody>
-          </table>
+        <div class="kpi-grid">
+          <div class="kpi"><h2 id="kpi-players">0</h2><p>Players</p></div>
+          <div class="kpi"><h2 id="kpi-wins">0</h2><p>Wins Total</p></div>
+          <div class="kpi"><h2 id="kpi-top8">0</h2><p>Top 8 Placements</p></div>
         </div>
       </div>
-    </section>
 
-    <!-- PLAYERS -->
-    <section id="view-players" class="view">
       <div class="card">
-        <div class="row between center wrap gap-12">
-          <h3>Team Roster</h3>
-          <button class="btn" id="btn-open-player">+ Player</button>
-        </div>
-        <table id="players-table">
-          <thead><tr><th>Player</th><th>W‑L‑D</th><th>Win%</th><th>Decks</th><th>Top 8</th><th></th></tr></thead>
+        <h3>Letzte Matches</h3>
+        <table id="latest-results">
+          <thead><tr><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </section>
 
+    <!-- PLAYERS -->
+    <section id="view-players" class="view">
+      <div class="row" style="gap:8px;margin-bottom:8px;">
+        <button class="btn" id="btn-open-player">+ Player</button>
+        <button class="btn ghost" id="export-players">Export Players (CSV)</button>
+      </div>
+
+      <table id="players-table">
+        <thead>
+          <tr><th>Name</th><th>Record</th><th>Win %</th><th>Decks</th><th>Top 8</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
     <!-- MATCHES -->
     <section id="view-matches" class="view">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Match hinzufügen</h3>
-          <form id="match-form" class="form-grid">
-            <select id="m-player" required></select>
-            <input id="m-deck" placeholder="Deck (z. B. Dragapult)" required />
-            <input id="m-opp" placeholder="Gegner" required />
-            <select id="m-res" required><option>W</option><option>L</option><option>D</option></select>
-            <input id="m-event" placeholder="Event (Locals, Regionals…)" />
-            <input id="m-date" type="date" />
-            <button class="btn" type="submit">Speichern</button>
-          </form>
-        </div>
-        <div class="card">
+      <div class="card">
+        <h3>Match eintragen</h3>
+        <form id="match-form" class="col">
+          <label>Datum <input type="date" id="m-date"></label>
+          <label>Player <select id="m-player"></select></label>
+          <label>Deck <input type="text" id="m-deck" placeholder="Deck-Name"></label>
+          <label>Opponent <input type="text" id="m-opp" placeholder="Gegner"></label>
+          <label>Result 
+            <select id="m-res">
+              <option value="W">Win</option>
+              <option value="L">Loss</option>
+              <option value="D">Draw</option>
+            </select>
+          </label>
+          <label>Event <input type="text" id="m-event" placeholder="Event-Name"></label>
+          <button type="submit" class="btn">Speichern</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="row between center wrap">
           <h3>Alle Matches</h3>
-          <table id="matches-table">
-            <thead><tr><th>Datum</th><th>Player</th><th>Deck</th><th>VS</th><th>Res</th><th>Event</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
         </div>
+        <table id="matches-table">
+          <thead><tr><th>Date</th><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th><th>Event</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
     <!-- EVENTS -->
     <section id="view-events" class="view">
-      <div class="grid-2">
-        <div class="card">
+      <div class="card">
+        <h3>Event hinzufügen</h3>
+        <form id="event-form" class="col">
+          <label>Name <input type="text" id="ev-name" placeholder="Event-Name"></label>
+          <label>Datum <input type="date" id="ev-date"></label>
+          <label>Ort <input type="text" id="ev-loc" placeholder="Ort"></label>
+          <label>Typ <input type="text" id="ev-type" placeholder="z. B. Regional"></label>
+          <button type="submit" class="btn">Speichern</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="row between center wrap">
           <h3>Events</h3>
-          <table id="events-table">
-            <thead><tr><th>Datum</th><th>Name</th><th>Ort</th><th>Typ</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <button class="btn ghost" id="export-events">Export Events (CSV)</button>
         </div>
-        <div class="card">
-          <h3>Event hinzufügen</h3>
-          <form id="event-form" class="form-grid">
-            <input id="ev-name" placeholder="Eventname" required />
-            <input id="ev-date" type="date" required />
-            <input id="ev-loc" placeholder="Ort" required />
-            <select id="ev-type"><option>Locals</option><option>Regionals</option><option>Internationals</option><option>Special Event</option></select>
-            <button class="btn" type="submit">Speichern</button>
-          </form>
-        </div>
+        <table id="events-table">
+          <thead><tr><th>Date</th><th>Name</th><th>Location</th><th>Type</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
     <!-- SPONSORS -->
     <section id="view-sponsors" class="view">
-      <div class="grid-2">
-        <div class="card">
+      <div class="card">
+        <h3>Sponsor hinzufügen</h3>
+        <form id="sponsor-form" class="col">
+          <label>Name <input type="text" id="sp-name" placeholder="Sponsor-Name"></label>
+          <label>URL <input type="url" id="sp-url" placeholder="https://..."></label>
+          <button type="submit" class="btn">Speichern</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="row between center wrap">
           <h3>Aktive Sponsoren</h3>
-          <ul id="sponsor-list" class="list"></ul>
+          <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
         </div>
-        <div class="card">
-          <h3>Sponsor hinzufügen</h3>
-          <form id="sponsor-form" class="form-grid">
-            <input id="sp-name" placeholder="Name" required />
-            <input id="sp-url" placeholder="URL (https://…)" />
-            <button class="btn" type="submit">Hinzufügen</button>
-          </form>
-        </div>
+        <ul id="sponsor-list" class="list"></ul>
       </div>
     </section>
+  </main>
 
-  <!-- Modal: Add Player -->
-  <dialog id="player-modal">
-    <form id="player-form" method="dialog" class="modal">
-      <h3>Player hinzufügen</h3>
-      <input id="p-name" placeholder="Name" required />
-      <input id="p-decks" placeholder="Decks (kommagetrennt)" />
-      <div class="row end gap-8">
-        <button class="btn ghost" value="cancel">Abbrechen</button>
-        <button class="btn" value="default" type="submit">Speichern</button>
+  <!-- Player-Modal -->
+  <dialog id="player-modal" class="modal">
+    <form id="player-form" class="col">
+      <h3>Neuer Player</h3>
+      <label>Name <input id="p-name" type="text" required></label>
+      <label>Decks (Komma-getrennt) <input id="p-decks" type="text"></label>
+      <div class="row right" style="gap:8px;">
+        <button type="button" onclick="playerModal.close()" class="btn ghost">Abbrechen</button>
+        <button type="submit" class="btn">Speichern</button>
       </div>
     </form>
   </dialog>
 
-  <footer class="container foot muted">Auth: E‑Mail/Passwort · Admin-Tab (Claims) · Firestore · PWA‑ready</footer>
-
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="app.js"></script>
 </body>
 </html>
