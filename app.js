@@ -1,5 +1,5 @@
-// app.js — MANIACS · COMPETE (ohne Admin-Tab)
-// Nur fabioberta@me.com darf Players anlegen/löschen.
+// app.js — MANIACS · COMPETE
+// Nur fabioberta@me.com darf Players & Sponsors anlegen/löschen.
 
 import {
   auth, loginEmail, logout, onUser,
@@ -34,7 +34,8 @@ let currentUser = null;
 const OWNER_EMAIL = "fabioberta@me.com";
 
 // Sichtbarkeit zu Beginn (bis onUser feuert)
-document.getElementById('btn-open-player')?.classList.add('hidden');
+$('#btn-open-player')?.classList.add('hidden');
+$('#sponsor-form')?.classList.add('hidden');
 
 onUser(async (user)=>{
   currentUser = user || null;
@@ -44,9 +45,10 @@ onUser(async (user)=>{
   $('#btn-logout').classList.toggle('hidden', !user);
   $('#login-form').classList.toggle('hidden', !!user);
 
-  // Nur Fabio sieht "+ Player"
-  const canEditPlayers = !!(user && user.email === OWNER_EMAIL);
-  document.getElementById('btn-open-player')?.classList.toggle('hidden', !canEditPlayers);
+  // Nur Fabio sieht "+ Player" und Sponsor-Formular
+  const canEdit = !!(user && user.email === OWNER_EMAIL);
+  $('#btn-open-player')?.classList.toggle('hidden', !canEdit);
+  $('#sponsor-form')?.classList.toggle('hidden', !canEdit);
 });
 
 // ---------- Collections ----------
@@ -90,7 +92,7 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
         <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
         <td>${(p.decks||[]).join(', ')}</td>
         <td>${p.top8||0}</td>
-        <td><button class="btn ghost" data-del-p="${p.id}">Löschen</button></td>
+        <td>${currentUser?.email === OWNER_EMAIL ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
       </tr>`
     );
     opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
@@ -102,7 +104,6 @@ onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
   $('#kpi-wins').textContent = tw;
   $('#kpi-top8').textContent = t8;
 
-  // Löschen nur für Fabio
   $$('[data-del-p]').forEach(b=>b.addEventListener('click', async()=>{
     if(!currentUser) return alert('Login erforderlich.');
     if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Players löschen.');
@@ -128,7 +129,6 @@ $('#match-form').addEventListener('submit', async (e)=>{
   };
   await addDoc(col(C_MATCHES), m);
 
-  // einfache Zähler-Updates (Demo, nicht transaktional)
   if(playerId){
     const all = await getDocs(query(col(C_PLAYERS)));
     all.forEach(async d=>{
@@ -190,6 +190,7 @@ onSnapshot(query(col(C_EVENTS), orderBy('date','asc')), (snap)=>{
 $('#sponsor-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(!currentUser) return alert('Login erforderlich.');
+  if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Sponsoren anlegen.');
   const s = { name: $('#sp-name').value.trim(), url: $('#sp-url').value.trim() };
   await addDoc(col(C_SPONS), s);
   e.target.reset();
@@ -206,13 +207,14 @@ onSnapshot(col(C_SPONS), (snap)=>{
         <strong>${s.name}</strong>
         <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
         <span class="grow"></span>
-        <button class="btn ghost" data-del-s="${s.id}">Entfernen</button>
+        ${currentUser?.email === OWNER_EMAIL ? `<button class="btn ghost" data-del-s="${s.id}">Entfernen</button>` : ''}
       </li>`
     );
   });
   sponsList.innerHTML = items.join('');
   $$('[data-del-s]').forEach(b=>b.addEventListener('click', async()=>{
     if(!currentUser) return alert('Login erforderlich.');
+    if(currentUser.email !== OWNER_EMAIL) return alert('Nur Fabio darf Sponsoren löschen.');
     await deleteDoc(docRef(C_SPONS, b.dataset.delS));
   }));
 });
