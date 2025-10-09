@@ -39,6 +39,7 @@ if (window.__MANIACS_INIT__) {
 
   /* ------------------ Admin via Rules-Probe ------------------ */
   let currentUser = null;
+  if(!user){ document.getElementById('role-badge')?.classList.add('hidden'); }
   let isAdminUI = false;
 
   async function checkAdminViaRulesProbe(user){
@@ -53,13 +54,17 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-  function applyAdminUI(isAdmin){
-    isAdminUI = isAdmin;
-    // Admin-spezifische UI
-    $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
-    $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
-    $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
-  }
+function applyAdminUI(isAdmin){
+  isAdminUI = isAdmin;
+  // Admin-spezifische UI
+  $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
+  $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
+  $('#btn-open-player')?.classList.toggle('hidden', !isAdmin);
+
+  // 👑 Badge
+  const badge = document.getElementById('role-badge');
+  if (badge) badge.classList.toggle('hidden', !isAdmin);
+}
 
   /* ------------------ Auth ------------------ */
   $('#login-form')?.addEventListener('submit', async (e)=>{
