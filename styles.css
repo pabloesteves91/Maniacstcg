@@ -216,3 +216,44 @@ dialog{
   .app-header .logo img{ height:28px; }                        /* noch etwas kleiner auf Mobile */
   .app-header .app-title{ font-size:18px; }
 }
+
+/* Dashboard KPIs: mittig, größer, clean */
+.dashboard-kpis {
+  text-align:center;
+}
+.dashboard-title {
+  font-size:1.4rem;
+  font-weight:700;
+  margin-bottom:18px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.kpi-row {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:24px;
+}
+.kpi-box {
+  background:rgba(255,255,255,.05);
+  border-radius:16px;
+  padding:20px 30px;
+  min-width:150px;
+}
+.kpi-label {
+  color:var(--muted);
+  font-size:15px;
+  margin-bottom:6px;
+}
+.kpi-value {
+  font-size:36px;
+  font-weight:800;
+  color:var(--brand);
+  letter-spacing:1px;
+}
+@media (max-width:700px){
+  .kpi-row{ gap:16px; }
+  .kpi-box{ padding:16px 20px; }
+  .kpi-value{ font-size:28px; }
+}
