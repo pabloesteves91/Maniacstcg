@@ -219,4 +219,75 @@ if (window.__MANIACS_INIT__) {
     }
   }
 
-} // end init guard
+  // ✅ Fix: Match speichern ohne Tab-Wechsel oder Reload
+  const matchForm = document.getElementById('match-form');
+  if (matchForm) {
+    matchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if(submitting.match) return;
+      if(!currentUser) return alert('Login erforderlich.');
+
+      const btn = e.submitter || matchForm.querySelector('button[type="submit"]');
+      const opt = document.querySelector('#m-player')?.selectedOptions[0];
+      const playerId = opt?.value || '';
+      const playerName = opt?.dataset.name || '';
+
+      const m = {
+        date: document.getElementById('m-date').value || new Date().toISOString().slice(0,10),
+        playerId,
+        player: playerName,
+        deck: document.getElementById('m-deck').value.trim(),
+        opp: document.getElementById('m-opp').value.trim(),
+        res: document.getElementById('m-res').value,
+        tier: document.getElementById('m-tier').value,
+        event: document.getElementById('m-event').value.trim()
+      };
+
+      try {
+        submitting.match = true;
+        btn?.setAttribute('disabled', 'disabled');
+        btn.textContent = 'Speichere...';
+        await addDoc(col(C_MATCHES), m);
+        if (playerId) await recomputePlayerStats(playerId);
+        matchForm.reset();
+        btn.textContent = 'Gespeichert ✅';
+        setTimeout(() => (btn.textContent = 'Match speichern'), 1500);
+      } catch (err) {
+        alert('Fehler beim Speichern: ' + (err.message || err));
+      } finally {
+        submitting.match = false;
+        btn?.removeAttribute('disabled');
+      }
+    });
+  }
+
+  // Live-Snapshot: Matches automatisch aktualisieren
+  const matchesTBody = document.querySelector('#matches-table tbody');
+  onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap)=>{
+    const rows = [];
+    snap.forEach(d=>{
+      const m = d.data();
+      rows.push(`
+        <tr>
+          <td>${m.date||''}</td>
+          <td>${m.player||''}</td>
+          <td>${m.deck||''}</td>
+          <td>${m.opp||''}</td>
+          <td>${m.res||''}</td>
+          <td>${tierToText(m.tier)||''}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button>` : ''}</td>
+        </tr>
+      `);
+    });
+    matchesTBody.innerHTML = rows.join('');
+
+    // Admin-Löschen
+    $$('[data-del-match]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!currentUser) return alert('Login erforderlich.');
+      if(!isAdminUI)   return alert('Keine Adminrechte.');
+      const pid = b.dataset.playerId || '';
+      if (!confirm('Diesen Match-Eintrag wirklich löschen?')) return;
+      await deleteDoc(docRef(C_MATCHES, b.dataset.delMatch));
+      if (pid) await recomputePlayerStats(pid);
+    }));
+  });
