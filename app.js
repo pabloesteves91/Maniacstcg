@@ -1,11 +1,11 @@
-// MANIACS · COMPETE — app.js (cleaned: admin-only via CSS flag, players: last-win deck)
+// MANIACS · COMPETE — app.js (admin-only via CSS flag, players: last-win deck, KPI: Streak Leader)
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
   query, orderBy, deleteDoc, getDoc
 } from './firebase.js';
 
-// ===== Global Init Guard (verhindert doppelte Initialisierung) =====
+// ===== Global Init Guard =====
 if (window.__MANIACS_INIT__) {
   console.warn('MANIACS app already initialized — skipping duplicate init.');
 } else {
@@ -26,7 +26,7 @@ if (window.__MANIACS_INIT__) {
     if(!tip) return;
 
     const mqPortrait = window.matchMedia('(orientation: portrait)');
-    const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
+    const mqSmall    = window.matchMedia('(max-width: 700px)');
 
     function updateRotateTip(){
       const show = mqSmall.matches && mqPortrait.matches;
@@ -76,6 +76,7 @@ if (window.__MANIACS_INIT__) {
 
   function applyAdminUI(isAdmin){
     isAdminUI = isAdmin;
+
     // Admin-spezifische UI
     $('#sponsor-form')?.classList.toggle('hidden', !isAdmin);
     $('#sponsor-form-card')?.classList.toggle('hidden', !isAdmin);
@@ -85,7 +86,7 @@ if (window.__MANIACS_INIT__) {
     const badge = document.getElementById('role-badge');
     if (badge) badge.classList.toggle('hidden', !isAdmin);
 
-    // NEU: Body-Flag für .admin-only Elemente
+    // Body-Flag, damit CSS .admin-only sichtbar machen kann
     document.body.classList.toggle('is-admin', isAdmin);
   }
 
@@ -109,7 +110,7 @@ if (window.__MANIACS_INIT__) {
     // Badge beim Ausloggen sicher verstecken
     document.getElementById('role-badge')?.classList.toggle('hidden', !user);
 
-    // Read-only Layout: linke Karten verstecken, rechte Karte mittig
+    // Read-only Layout
     const isLoggedIn = !!user;
     document.body.classList.toggle('readonly', !isLoggedIn);
 
@@ -169,11 +170,8 @@ if (window.__MANIACS_INIT__) {
   const topDeckEl     = document.getElementById('top-deck-list');  // UL
 
   /* ------------------ Players ------------------ */
-  const playersTBody=$('#players-table tbody'); const mPlayerSelect=$('#m-player');
-
-  // NEU: Map "letzter Win" + Cache + Renderer
-  let latestWinDeckByPlayer = Object.create(null); // playerId -> {date, deck}
-  let lastPlayers = []; // Cache der Players
+  const playersTBody=$('#players-table tbody');
+  const mPlayerSelect=$('#m-player');
 
   function attachPlayerDeleteButtons(){
     $$('[data-del-p]').forEach(b=>{
@@ -187,12 +185,17 @@ if (window.__MANIACS_INIT__) {
     });
   }
 
+  // Map: playerId -> {date, deck} des letzten gewonnenen Matches
+  let latestWinDeckByPlayer = Object.create(null);
+  // Cache der Players
+  let lastPlayers = [];
+
   function renderPlayersTable() {
     if (!playersTBody) return;
     const rows = [];
     lastPlayers.forEach(p => {
       const g = (p.wins||0) + (p.losses||0) + (p.draws||0);
-      const pct = g ? Math.round((p.wins||0)/g*100) : 0;
+      const pct = g ? Math.round((p.wins||0) / g * 100) : 0;
       const lw = latestWinDeckByPlayer[p.id];
       const lastWinDeck = lw?.deck ? lw.deck : '—';
       rows.push(
@@ -216,9 +219,12 @@ if (window.__MANIACS_INIT__) {
       const p={id:d.id, ...d.data()};
       lastPlayers.push(p);
       opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
-      tw+=(p.wins||0); t8+=(p.top8||0);
+      tw+=(p.wins||0);
+      t8+=(p.top8||0);
     });
+
     renderPlayersTable();
+
     mPlayerSelect.innerHTML = opts.join('');
     $('#kpi-players').textContent = snap.size;
     $('#kpi-wins').textContent = tw;
@@ -296,19 +302,24 @@ if (window.__MANIACS_INIT__) {
     }
   });
 
-  const matchesTBody=$('#matches-table tbody'); const latestTBody=$('#latest-results tbody');
+  const matchesTBody=$('#matches-table tbody');
+  const latestTBody=$('#latest-results tbody');
 
-  // SNAPSHOT: Matches -> baut latestWinDeckByPlayer und refresht Players-Tabelle
   onSnapshot(query(col(C_MATCHES), orderBy('date','desc')), (snap) => {
     const rows = [], latest = [];
     let teamW = 0, teamL = 0, teamD = 0;
     const deckWinCounts = {};
-
-    // NEU: Map frisch aufbauen
     const newLatestWin = Object.create(null);
+
+    // NEU: Map für Streak Leader (pro Spieler)
+    const byPlayer = Object.create(null);
+    // Wir iterieren in DESC-Order: erste Loss nach einer Serie beendet die aktuelle Streak.
+    // Draws brechen die Serie NICHT (anpassbar).
 
     snap.forEach(d=>{
       const m=d.data();
+
+      // Matches-Tabelle
       rows.push(`
         <tr>
           <td>${m.date||''}</td>
@@ -323,6 +334,7 @@ if (window.__MANIACS_INIT__) {
 
       if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
 
+      // Team W/L/D + Top-Deck-Zähler
       if (m.res === 'W') {
         teamW++;
         if (m.deck) {
@@ -334,8 +346,22 @@ if (window.__MANIACS_INIT__) {
         if (pid && !newLatestWin[pid]) {
           newLatestWin[pid] = { date: m.date || '', deck: m.deck || '' };
         }
-      } else if (m.res === 'L') teamL++;
-      else if (m.res === 'D') teamD++;
+      } else if (m.res === 'L') {
+        teamL++;
+      } else if (m.res === 'D') {
+        teamD++;
+      }
+
+      // Streak-Berechnung
+      if (m.playerId) {
+        const pid = m.playerId;
+        const s = byPlayer[pid] || (byPlayer[pid] = { name: m.player || '—', currentStreak: 0, broken: false });
+        if (!s.broken) {
+          if (m.res === 'W') s.currentStreak++;
+          else if (m.res === 'L') { s.currentStreak = 0; s.broken = true; }
+          // Draw => keine Änderung, kein Break
+        }
+      }
     });
 
     // Map übernehmen + Players neu rendern (Deck-Spalte live aktualisieren)
@@ -386,6 +412,15 @@ if (window.__MANIACS_INIT__) {
         topDeckEl.appendChild(li);
       }
     }
+
+    // ===== KPI: Streak Leader (rechts neben Wins Total) =====
+    let leaderName = '—', leaderLen = 0;
+    Object.values(byPlayer).forEach(p=>{
+      if (p.currentStreak > leaderLen) { leaderLen = p.currentStreak; leaderName = p.name || '—'; }
+    });
+    // Setze nur, wenn das Element existiert (HTML ggf. noch nicht angepasst)
+    const streakEl = $('#kpi-streak');
+    if (streakEl) streakEl.textContent = `${leaderName} (W${leaderLen})`;
   });
 
   /* ------------------ Events ------------------ */
@@ -471,12 +506,15 @@ if (window.__MANIACS_INIT__) {
 
   $('#export-matches')?.addEventListener('click', async ()=>{
     const snap=await getDocs(query(col(C_MATCHES), orderBy('date','desc'))); const rows=[];
+    function t(code){
+      switch(code){case'L':return'Local';case'R':return'Regional';case'I':return'International';case'C':return'Challenge';case'S':return'Special';case'W':return'Worlds';default:return'';}
+    }
     snap.forEach(d=>{
       const m=d.data();
       rows.push({
         date:m.date||'', player:m.player||'', playerId:m.playerId||'',
         deck:m.deck||'', opponent:m.opp||'', result:m.res||'',
-        tier: tierToText(m.tier||''), event:m.event||''
+        tier: t(m.tier||''), event:m.event||''
       });
     });
     downloadCSV('matches.csv', rows, ['date','player','playerId','deck','opponent','result','tier','event']);
