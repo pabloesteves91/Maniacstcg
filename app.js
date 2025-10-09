@@ -1,11 +1,4 @@
-// MANIACS · COMPETE — app.js (stable final)
-// - admin via rules-probe
-// - init-guard
-// - live re-render on admin change
-// - submit debouncing
-// - separate dashboard "Last Matches" render
-// - fixes for initial delete buttons & dropdown
-
+// MANIACS · COMPETE — app.js (stable final + iOS select fix + overlay guards)
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
@@ -23,7 +16,7 @@ if (window.__MANIACS_INIT__) {
   const $$ = (s)=>[...document.querySelectorAll(s)];
   function setActiveTab(id){
     $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
-    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`)); // <-- fixed template literal
+    $$('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${id}`));
   }
   $$('.tab').forEach(t=>t.addEventListener('click',()=>setActiveTab(t.dataset.tab)));
 
@@ -31,21 +24,34 @@ if (window.__MANIACS_INIT__) {
   (function(){
     const tip = document.getElementById('rotate-tip');
     if(!tip) return;
+
     const mqPortrait = window.matchMedia('(orientation: portrait)');
     const mqSmall    = window.matchMedia('(max-width: 700px)'); // nur kleine Screens
 
-    function updateRotateTip(){
+    const updateRotateTip = ()=>{
       const show = mqSmall.matches && mqPortrait.matches;
       tip.classList.toggle('show', show);
-    }
+      // Wenn versteckt, sicherstellen, dass nichts blockiert (CSS: pointer-events:none; visibility:hidden)
+      if (!show) {
+        // defensive: TabIndex und aria-hidden setzen
+        tip.setAttribute('aria-hidden','true');
+      } else {
+        tip.removeAttribute('aria-hidden');
+      }
+    };
+
     updateRotateTip();
-    const onPortrait = ()=>updateRotateTip();
-    const onSmall = ()=>updateRotateTip();
+    const onPortrait = ()=>setTimeout(updateRotateTip, 50);
+    const onSmall = ()=>setTimeout(updateRotateTip, 50);
+
     if (mqPortrait.addEventListener) mqPortrait.addEventListener('change', onPortrait);
     else mqPortrait.addListener && mqPortrait.addListener(onPortrait);
     if (mqSmall.addEventListener) mqSmall.addEventListener('change', onSmall);
     else mqSmall.addListener && mqSmall.addListener(onSmall);
+
     window.addEventListener('resize', updateRotateTip, { passive:true });
+    window.addEventListener('orientationchange', ()=>setTimeout(updateRotateTip, 100), { passive:true });
+    document.addEventListener('visibilitychange', updateRotateTip);
   })();
 
   /* ------------------ CSV helpers ------------------ */
@@ -72,7 +78,7 @@ if (window.__MANIACS_INIT__) {
   let currentUser = null;
   let isAdminUI = false;
 
-  // Caches der letzten Snapshots, damit UI sofort auf Admin-Wechsel reagieren kann
+  // Caches für sofortiges Re-Rendern
   let cachePlayers = [];
   let cacheMatches = [];
   let cacheEvents  = [];
@@ -98,7 +104,7 @@ if (window.__MANIACS_INIT__) {
     // 👑 Badge
     const badge = document.getElementById('role-badge');
     if (badge) badge.classList.toggle('hidden', !isAdmin);
-    // Re-render mit Caches, damit Delete-Buttons sofort sichtbar/unsichtbar werden
+    // Re-render mit Caches, damit Delete-Buttons sofort korrekt sind
     renderPlayers(cachePlayers);
     renderMatches(cacheMatches);
     renderEvents(cacheEvents);
@@ -238,18 +244,21 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-// Matches-Form: Player Dropdown
-if (mPlayerSelect) {
-  const opts = [];
-  // Platzhalter (verhindert "leere" Auswahl & iOS-Picker-Bug)
-  opts.push('<option value="" disabled selected hidden>– Player wählen –</option>');
-  docs.forEach(d=>{
-    const p = d.data();
-    opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
-  });
-  mPlayerSelect.innerHTML = opts.join('');
-  mPlayerSelect.disabled = docs.length === 0;
-}
+    // Matches-Form: Player Dropdown (robust für iOS/Safari)
+    if (mPlayerSelect) {
+      const opts = [];
+      // Platzhalter – verhindert "leere" Auswahl & iOS-Picker-Bug
+      opts.push('<option value="" disabled selected hidden>– Player wählen –</option>');
+      docs.forEach(d=>{
+        const p = d.data();
+        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
+      });
+      mPlayerSelect.innerHTML = opts.join('');
+      mPlayerSelect.disabled = docs.length === 0;
+
+      // iOS Fix: forciere ein Change-Event, damit selectedOptions sauber initialisiert ist
+      mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
+    }
   }
 
   // Matches
@@ -452,8 +461,9 @@ if (mPlayerSelect) {
       if(m.deck) decksSet.add(String(m.deck).trim());
     });
     const pRef = docRef(C_PLAYERS, playerId);
-    const playerDocs = await getDocs(query(col(C_PLAYERS)));
-    for (const d of playerDocs.docs) {
+    // beibehaltene Felder holen und überschreiben
+    const playersSnap = await getDocs(query(col(C_PLAYERS)));
+    for (const d of playersSnap.docs) {
       if (d.id === playerId) {
         const p = d.data();
         await setDoc(pRef, { ...p, wins, losses, draws, decks: [...decksSet] });
@@ -469,9 +479,16 @@ if (mPlayerSelect) {
     if(!currentUser) return alert('Login erforderlich.');
 
     const btn = e.submitter || $('#match-form button[type="submit"]');
-    const opt=$('#m-player')?.selectedOptions?.[0];
-    const playerId=opt?.value || '';
-    const playerName=opt?.dataset.name || '';
+    const sel = $('#m-player');
+    const opt = sel?.selectedOptions?.[0];
+    const playerId   = opt?.value || '';
+    const playerName = opt?.dataset?.name || '';
+
+    if (!playerId) {
+      alert('Bitte zuerst einen Player wählen.');
+      return;
+    }
+
     const m={
       date: $('#m-date').value || new Date().toISOString().slice(0,10),
       playerId, player:playerName,
@@ -486,8 +503,12 @@ if (mPlayerSelect) {
       btn?.setAttribute('disabled','disabled');
       await addDoc(col(C_MATCHES), m);
       if (playerId) await recomputePlayerStats(playerId);
-      // Formular leeren, aber auf dem Tab bleiben
-      e.target.reset();
+      e.target.reset(); // auf dem Tab bleiben
+      // Platzhalter wieder setzen, damit iOS-Picker nicht "leere" Auswahl behält
+      if (sel) {
+        sel.selectedIndex = 0;
+        sel.dispatchEvent(new Event('change', { bubbles:true }));
+      }
     } finally {
       submitting.match = false;
       btn?.removeAttribute('disabled');
