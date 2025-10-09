@@ -10,30 +10,34 @@
   <script type="module" src="app.js?v=10"></script>
 </head>
 <body>
-  <header class="app-header">
-    <div class="container row between center wrap">
-      <div class="row center gap-12">
-        <div class="logo"><img src="Maniacs_Logo_w.png" alt="Logo" /></div>
-        <h1>MANIACS <span class="muted">· COMPETE</span></h1>
+<header class="app-header">
+  <div class="container row between center wrap">
+    <div class="row center gap-12">
+      <div class="logo">
+        <img src="Maniacs_Logo_w.png" alt="Logo" />
       </div>
-      <div class="row center gap-8">
-        <span id="user-info" class="muted"></span>
-        <form id="login-form" class="row center gap-8" autocomplete="on">
-          <input id="login-email" type="email" placeholder="E-Mail" required />
-          <input id="login-pass" type="password" placeholder="Passwort" required />
-          <button type="submit" class="btn">Login</button>
-        </form>
-        <button id="btn-logout" class="btn ghost hidden">Logout</button>
-      </div>
+      <h1 class="app-title">MANIACS <span class="muted">· COMPETE</span></h1>
     </div>
-    <nav class="tabs container">
-      <button class="tab active" data-tab="dashboard">Dashboard</button>
-      <button class="tab" data-tab="players">Players</button>
-      <button class="tab" data-tab="matches">Matches</button>
-      <button class="tab" data-tab="events">Events</button>
-      <button class="tab" data-tab="sponsors">Sponsors</button>
-    </nav>
-  </header>
+
+    <div class="row center gap-8">
+      <span id="user-info" class="muted"></span>
+      <form id="login-form" class="row center gap-8" autocomplete="on">
+        <input id="login-email" type="email" placeholder="E-Mail" required />
+        <input id="login-pass" type="password" placeholder="Passwort" required />
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <button id="btn-logout" class="btn ghost hidden">Logout</button>
+    </div>
+  </div>
+
+  <nav class="tabs container">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="players">Players</button>
+    <button class="tab" data-tab="matches">Matches</button>
+    <button class="tab" data-tab="events">Events</button>
+    <button class="tab" data-tab="sponsors">Sponsors</button>
+  </nav>
+</header>
 
   <main class="container">
     <!-- DASHBOARD -->
