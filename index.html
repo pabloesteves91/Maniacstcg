@@ -55,16 +55,21 @@
   <section id="view-dashboard" class="view active" aria-labelledby="dash-title">
     <div class="card dashboard-kpis">
       <h3 id="dash-title" class="dashboard-title">Team Stats</h3>
-      <div class="kpi-row">
-        <div class="kpi-box">
-          <div class="kpi-label">Players</div>
-          <div class="kpi-value" id="kpi-players">0</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-label">Wins Total</div>
-          <div class="kpi-value" id="kpi-wins">0</div>
-        </div>
-      </div>
+<div class="kpi-row">
+  <div class="kpi-box">
+    <div class="kpi-label">Players</div>
+    <div class="kpi-value" id="kpi-players">0</div>
+  </div>
+  <div class="kpi-box">
+    <div class="kpi-label">Wins Total</div>
+    <div class="kpi-value" id="kpi-wins">0</div>
+  </div>
+  <!-- NEU: Streak Leader -->
+  <div class="kpi-box">
+    <div class="kpi-label">Streak Leader</div>
+    <div class="kpi-value streak" id="kpi-streak">—</div>
+  </div>
+</div>
       <div class="row end" style="margin-top:16px;">
         <button class="btn ghost" id="export-stats">Export Stats (CSV)</button>
       </div>
