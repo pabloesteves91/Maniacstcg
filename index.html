@@ -2,40 +2,43 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>TEAM MANIACS · STATS</title>
+  <title>MANIACS · Compete</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="Maniacs_Logo_w.png" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <style>
-    /* Mini-Base (falls deine styles.css separat ist, kannst du diese Styles dort ablegen) */
     :root{--bg:#0f1420;--card:#151a25;--muted:#9aa3b2;--txt:#fff;--brand:#E30613;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;}
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:100%;overflow-x:hidden}
     a{color:inherit;text-decoration:none}
     .container{max-width:1200px;margin:0 auto;padding:18px}
+
     .row{display:flex;gap:10px}
     .row.between{justify-content:space-between}
     .row.center{align-items:center}
     .row.end{justify-content:flex-end}
     .row.wrap{flex-wrap:wrap}
     .grow{flex:1}
-    .brand img{height:42px;display:block}
+
     header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg, rgba(15,20,32,.98), rgba(15,20,32,.88) 60%, transparent)}
+    .brand img{height:42px;display:block}
+
     .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px}
     .card h3{margin:0 0 10px}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
     .mx-center{margin-left:auto;margin-right:auto}
+
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     input,select,button{background:#0d111a;border:1px solid rgba(255,255,255,.12);color:var(--txt);border-radius:10px;padding:10px 12px;min-height:44px;font-size:16px}
-    input::placeholder{color:#778}
-    button.btn{background:var(--brand);border:none;font-weight:600;cursor:pointer}
+    .btn{background:var(--brand);border:none;font-weight:600;cursor:pointer}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.22)}
     .btn.icon{display:inline-flex;gap:8px;align-items:center}
     .hidden{display:none !important}
+
     table{width:100%;border-collapse:separate;border-spacing:0}
     thead th{font-weight:600;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
     tbody td{padding:10px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+
     .pill{padding:6px 10px;border-radius:16px;background:rgba(255,255,255,.06)}
     .pill.ok{background:rgba(46,204,113,.15)}
     .pill.warn{background:rgba(241,196,15,.15)}
@@ -45,8 +48,17 @@
     .footer-links{display:flex;gap:10px;flex-wrap:wrap}
     .social-btn{width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:#0d111a;border:1px solid rgba(255,255,255,.12)}
     .social-btn img{width:20px;height:20px;display:block}
-    /* Verify-Banner (optional) */
-    .card.warn{border:1px solid rgba(227,6,19,.4);background:rgba(227,6,19,.08)}
+
+    /* Tabs / Reiter */
+    .tabs.card{padding:8px}
+    .tabs{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer;white-space:nowrap}
+    .tab.active{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.36)}
+
+    /* Views-Schaltung */
+    .view{display:none}
+    .view.active{display:block}
+
     /* Responsive */
     .nav,.tabs,.row.wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
     @media (max-width:980px){.grid-2{grid-template-columns:1fr}.mx-center{margin:0}}
@@ -61,16 +73,13 @@
   <header>
     <div class="container">
       <div class="row between center wrap">
-        <a class="brand row center" href="#">
-          <img src="Maniacs_Logo_w.png" alt="MANIACS" />
-        </a>
+        <a class="brand row center" href="#"><img src="Maniacs_Logo_w.png" alt="MANIACS" /></a>
         <div class="row center wrap" style="gap:8px">
-          <!-- Login -->
+          <!-- Nur Login -->
           <form id="login-form" class="row" autocomplete="on">
             <input type="email" id="login-email" placeholder="E-Mail" required />
             <input type="password" id="login-pass" placeholder="Passwort" required />
             <button type="submit" class="btn">Login</button>
-            <button type="button" id="btn-open-register" class="btn ghost">Registrieren</button>
           </form>
           <div class="row center">
             <span id="user-info" class="muted"></span>
@@ -81,46 +90,25 @@
     </div>
   </header>
 
-  <!-- Optional: Hinweis, falls du mal wieder Verifikation anzeigen willst
-  <div id="verify-banner" class="container">
-    <div class="card warn hidden">
-      <div class="row between center wrap">
-        <div>
-          <strong>E-Mail noch nicht bestätigt.</strong>
-          <div class="muted">Bitte Bestätigungs-Mail prüfen.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  -->
-
   <!-- Main -->
   <main class="container">
 
-    <!-- KPIs -->
-    <div class="row between center wrap kpi-row" style="margin-bottom:14px">
-      <div class="card kpi" style="flex:1 1 200px">
-        <div class="muted">Players</div>
-        <div id="kpi-players" style="font-size:28px;font-weight:700">0</div>
-      </div>
-      <div class="card kpi" style="flex:1 1 200px">
-        <div class="muted">Wins Total</div>
-        <div id="kpi-wins" style="font-size:28px;font-weight:700">0</div>
-      </div>
-      <div class="card kpi" style="flex:1 1 200px">
-        <div class="muted">Top 8</div>
-        <div id="kpi-top8" style="font-size:28px;font-weight:700">0</div>
-      </div>
+    <!-- Tabs/Reiter -->
+    <div class="tabs card" style="margin: 12px 0 16px;">
+      <button class="tab active" data-tab="players">Players</button>
+      <button class="tab" data-tab="matches">Matches</button>
+      <button class="tab" data-tab="events">Events</button>
+      <button class="tab" data-tab="sponsors">Sponsors</button>
     </div>
 
-    <!-- Team Stats (ohne Diagramme) -->
+    <!-- Team Stats (oben sichtbar) -->
     <div class="card" id="team-stats-card" style="margin-bottom:18px">
       <h3>Team Stats</h3>
       <div class="grid-2">
         <div>
           <h4 style="margin:0 0 6px">Team Summary</h4>
           <ul id="team-summary" class="list" style="list-style:none;padding:0;margin:6px 0 0"></ul>
-          <div class="row end actions" style="margin-top:8px">
+          <div class="row end" style="margin-top:8px">
             <button class="btn ghost" id="export-stats">Export Stats (CSV)</button>
           </div>
         </div>
@@ -131,8 +119,8 @@
       </div>
     </div>
 
-    <!-- Players -->
-    <section id="view-players" class="view" style="margin-bottom:18px">
+    <!-- VIEW: Players -->
+    <section id="view-players" class="view active" style="margin-bottom:18px">
       <div class="card">
         <div class="row between center wrap">
           <h3>Players</h3>
@@ -144,14 +132,7 @@
         <div class="table-wrap" style="overflow-x:auto">
           <table id="players-table">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>W-L-D</th>
-                <th>Win%</th>
-                <th>Decks</th>
-                <th>Top 8</th>
-                <th></th>
-              </tr>
+              <tr><th>Name</th><th>W-L-D</th><th>Win%</th><th>Decks</th><th>Top 8</th><th></th></tr>
             </thead>
             <tbody><!-- JS --></tbody>
           </table>
@@ -159,10 +140,9 @@
       </div>
     </section>
 
-    <!-- Matches -->
+    <!-- VIEW: Matches -->
     <section id="view-matches" class="view" style="margin-bottom:18px">
       <div class="grid-2">
-        <!-- Formular (verbirgt sich bei Public Read) -->
         <div class="card" id="matches-form-card">
           <h3>Match eintragen</h3>
           <form id="match-form" class="form-grid">
@@ -188,7 +168,6 @@
           </form>
         </div>
 
-        <!-- Liste -->
         <div class="card" id="matches-list-card">
           <div class="row between center wrap">
             <h3>Alle Matches</h3>
@@ -197,15 +176,7 @@
           <div class="table-wrap" style="overflow-x:auto">
             <table id="matches-table">
               <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Player</th>
-                  <th>Deck</th>
-                  <th>Opponent</th>
-                  <th>Result</th>
-                  <th>Event</th>
-                  <th></th>
-                </tr>
+                <tr><th>Date</th><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th><th>Event</th><th></th></tr>
               </thead>
               <tbody><!-- JS --></tbody>
             </table>
@@ -213,9 +184,7 @@
           <h4 style="margin:16px 0 8px">Latest</h4>
           <div class="table-wrap" style="overflow-x:auto">
             <table id="latest-results">
-              <thead>
-                <tr><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th></tr>
-              </thead>
+              <thead><tr><th>Player</th><th>Deck</th><th>Opponent</th><th>Result</th></tr></thead>
               <tbody><!-- JS --></tbody>
             </table>
           </div>
@@ -223,10 +192,9 @@
       </div>
     </section>
 
-    <!-- Events -->
+    <!-- VIEW: Events -->
     <section id="view-events" class="view" style="margin-bottom:18px">
       <div class="grid-2">
-        <!-- Formular (verbirgt sich bei Public Read) -->
         <div class="card" id="events-form-card">
           <h3>Event hinzufügen</h3>
           <form id="event-form" class="form-grid">
@@ -245,7 +213,6 @@
           </form>
         </div>
 
-        <!-- Liste -->
         <div class="card" id="events-list-card">
           <div class="row between center wrap">
             <h3>Events</h3>
@@ -254,13 +221,7 @@
           <div class="table-wrap" style="overflow-x:auto">
             <table id="events-table">
               <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Name</th>
-                  <th>Ort</th>
-                  <th>Typ</th>
-                  <th></th>
-                </tr>
+                <tr><th>Date</th><th>Name</th><th>Ort</th><th>Typ</th><th></th></tr>
               </thead>
               <tbody><!-- JS --></tbody>
             </table>
@@ -269,10 +230,9 @@
       </div>
     </section>
 
-    <!-- Sponsors -->
+    <!-- VIEW: Sponsors -->
     <section id="view-sponsors" class="view" style="margin-bottom:18px">
       <div class="grid-2">
-        <!-- Formular (nur Owner sichtbar) -->
         <div class="card" id="sponsor-form-card">
           <h3>Sponsor hinzufügen</h3>
           <form id="sponsor-form" class="form-grid">
@@ -282,15 +242,12 @@
           </form>
         </div>
 
-        <!-- Liste -->
         <div class="card">
           <div class="row between center wrap">
             <h3>Sponsors</h3>
             <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
           </div>
-          <ul id="sponsor-list" style="list-style:none;padding:0;margin:8px 0 0">
-            <!-- JS -->
-          </ul>
+          <ul id="sponsor-list" style="list-style:none;padding:0;margin:8px 0 0"><!-- JS --></ul>
         </div>
       </div>
     </section>
@@ -319,24 +276,6 @@
       <div class="row end" style="grid-column:1/-1">
         <button type="button" class="btn ghost" onclick="document.getElementById('player-modal').close()">Abbrechen</button>
         <button type="submit" class="btn">Speichern</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- Register Modal -->
-  <dialog id="register-modal">
-    <form id="register-form" class="form-grid" autocomplete="off">
-      <h3 style="grid-column:1/-1;margin:0 0 6px">Konto erstellen</h3>
-
-      <input type="email" id="reg-email"  placeholder="E-Mail" required />
-      <input type="email" id="reg-email2" placeholder="E-Mail bestätigen" required />
-
-      <input type="password" id="reg-pass"  placeholder="Passwort (min. 6)" required minlength="6" />
-      <input type="password" id="reg-pass2" placeholder="Passwort bestätigen" required minlength="6" />
-
-      <div style="grid-column:1/-1" class="row end">
-        <button type="button" class="btn ghost" id="btn-reg-cancel">Abbrechen</button>
-        <button type="submit" class="btn">Registrieren</button>
       </div>
     </form>
   </dialog>
