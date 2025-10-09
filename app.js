@@ -244,21 +244,34 @@ if (window.__MANIACS_INIT__) {
       }
     }
 
-    // Matches-Form: Player Dropdown (robust für iOS/Safari)
-    if (mPlayerSelect) {
-      const opts = [];
-      // Platzhalter – verhindert "leere" Auswahl & iOS-Picker-Bug
-      opts.push('<option value="" disabled selected hidden>– Player wählen –</option>');
-      docs.forEach(d=>{
-        const p = d.data();
-        opts.push(`<option value="${d.id}" data-name="${p.name}">${p.name}</option>`);
-      });
-      mPlayerSelect.innerHTML = opts.join('');
-      mPlayerSelect.disabled = docs.length === 0;
+// Matches-Form: Player Dropdown (robust für iOS/Safari)
+if (mPlayerSelect) {
+  const prev = mPlayerSelect.value; // vorherige Auswahl merken
 
-      // iOS Fix: forciere ein Change-Event, damit selectedOptions sauber initialisiert ist
-      mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
-    }
+  // Platzhalter NICHT mit hidden (Safari-Bug). Nur disabled+selected.
+  let html = '<option value="" disabled selected>– Player wählen –</option>';
+  docs.forEach(d=>{
+    const p = d.data();
+    html += `<option value="${d.id}" data-name="${p.name}">${p.name}</option>`;
+  });
+  mPlayerSelect.innerHTML = html;
+
+  // Enable/Disable korrekt setzen
+  mPlayerSelect.disabled = docs.length === 0;
+
+  // Vorherige Auswahl wiederherstellen, falls möglich
+  if (prev && [...mPlayerSelect.options].some(o=>o.value === prev)) {
+    mPlayerSelect.value = prev;
+  } else {
+    mPlayerSelect.selectedIndex = 0; // auf Platzhalter
+  }
+
+  // iOS/Safari: ensure "selectedOptions" & UI sind synchron
+  mPlayerSelect.dispatchEvent(new Event('change', { bubbles:true }));
+
+  // Zusätzliche iOS-Stabilisierung
+  mPlayerSelect.style.webkitAppearance = 'menulist-button';
+}
   }
 
   // Matches
