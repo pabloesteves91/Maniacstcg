@@ -534,3 +534,16 @@ dialog{
   transform: scale(0.95);
   opacity: 0;
 }
+
+/* Falls ein rotate-tip existiert: nur blockieren, wenn .show */
+#rotate-tip { display: none !important; pointer-events: none !important; }
+#rotate-tip.show { display: grid !important; pointer-events: auto !important; }
+
+/* Select immer klickbar/oberhalb */
+#m-player {
+  -webkit-appearance: menulist-button;
+  appearance: menulist;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+}
