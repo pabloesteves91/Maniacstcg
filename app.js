@@ -1,4 +1,4 @@
-// MANIACS · COMPETE — app.js (stable admin-fix, init-guard, debounce)
+// MANIACS · COMPETE — app.js (final stable admin+snapshot fix)
 import {
   loginEmail, logout, onUser,
   col, docRef, addDoc, setDoc, getDocs, onSnapshot,
@@ -92,7 +92,6 @@ if (window.__MANIACS_INIT__) {
     $('#user-info').textContent = user ? user.email : '';
     $('#btn-logout')?.classList.toggle('hidden', !user);
     $('#login-form')?.classList.toggle('hidden', !!user);
-
     document.getElementById('role-badge')?.classList.toggle('hidden', !user);
 
     const isLoggedIn = !!user;
@@ -104,9 +103,6 @@ if (window.__MANIACS_INIT__) {
 
     const admin = await checkAdminViaRulesProbe(user);
     applyAdminUI(admin);
-
-    // 🔄 Snapshots reloaden, damit Buttons sofort sichtbar
-    reloadCollections();
   });
 
   /* ------------------ Collections ------------------ */
@@ -163,6 +159,35 @@ if (window.__MANIACS_INIT__) {
     });
   }
 
+  /* ------------------ Live Player Snapshot ------------------ */
+  onSnapshot(query(col(C_PLAYERS), orderBy('name')), (snap)=>{
+    const rows=[], opts=[]; let tw=0, t8=0;
+    snap.forEach(d=>{
+      const p={id:d.id, ...d.data()};
+      const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
+      const pct=g?Math.round((p.wins||0)/g*100):0;
+      rows.push(`
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
+          <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
+          <td>${(p.decks||[]).join(', ')}</td>
+          <td>${p.top8||0}</td>
+          <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
+        </tr>
+      `);
+      opts.push(`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`);
+      tw+=(p.wins||0); t8+=(p.top8||0);
+    });
+    playersTBody.innerHTML = rows.join('');
+    mPlayerSelect.innerHTML = opts.join('');
+    $('#kpi-players').textContent = snap.size;
+    $('#kpi-wins').textContent = tw;
+    $('#kpi-top8').textContent = t8;
+    attachPlayerDeleteButtons();
+  });
+
+  /* ------------------ Matches ------------------ */
   function tierToText(code){
     switch(code){
       case 'L': return 'Local';
@@ -192,64 +217,6 @@ if (window.__MANIACS_INIT__) {
         await setDoc(docRef(C_PLAYERS, playerId), { ...p, wins, losses, draws, decks: [...decksSet] });
       }
     }
-  }
-
-  // 🔁 Reload-Funktion nach Admin-Login
-  async function reloadCollections(){
-    // Players
-    const pSnap = await getDocs(query(col(C_PLAYERS), orderBy('name')));
-    const pRows = [];
-    pSnap.forEach(d=>{
-      const p={id:d.id, ...d.data()};
-      const g=(p.wins||0)+(p.losses||0)+(p.draws||0);
-      const pct=g?Math.round((p.wins||0)/g*100):0;
-      pRows.push(`
-        <tr>
-          <td>${p.name}</td>
-          <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
-          <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-          <td>${(p.decks||[]).join(', ')}</td>
-          <td>${p.top8||0}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-p="${p.id}">Löschen</button>` : ''}</td>
-        </tr>
-      `);
-    });
-    playersTBody.innerHTML = pRows.join('');
-    attachPlayerDeleteButtons();
-
-    // Events
-    const eSnap = await getDocs(query(col(C_EVENTS), orderBy('date','asc')));
-    const eRows = [];
-    eSnap.forEach(d=>{
-      const e=d.data();
-      eRows.push(`
-        <tr>
-          <td>${e.date||''}</td>
-          <td>${e.name||''}</td>
-          <td>${e.loc||''}</td>
-          <td>${e.type||''}</td>
-          <td>${isAdminUI ? `<button class="btn ghost" data-del-event="${d.id}">Löschen</button>` : ''}</td>
-        </tr>
-      `);
-    });
-    $('#events-table tbody').innerHTML = eRows.join('');
-
-    // Sponsoren
-    const sSnap = await getDocs(col(C_SPONS));
-    const sItems=[];
-    sSnap.forEach(d=>{
-      const s=d.data();
-      const host=s.url?new URL(s.url).host:'—';
-      sItems.push(`
-        <li>
-          <strong>${s.name}</strong>
-          <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
-          <span class="grow"></span>
-          ${isAdminUI ? `<button class="btn ghost" data-del-s="${d.id}">Entfernen</button>` : ''}
-        </li>
-      `);
-    });
-    $('#sponsor-list').innerHTML = sItems.join('');
   }
 
 } // end init guard
