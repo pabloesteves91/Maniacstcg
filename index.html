@@ -6,30 +6,28 @@
   <title>TEAM MANIACS</title>
   <link rel="icon" href="Maniacs_Logo_w.png" type="image/png" />
   <link rel="stylesheet" href="styles.css" />
-  <script type="module" src="app.js?v=14"></script>
-  <script type="module" src="firebase.js?v=2"></script>
-  <script type="module" src="app.js?v=13"></script>
+  <script type="module" src="app.js?v=15"></script>
 </head>
-<!-- ADD: zentrierter Rotate-Banner -->
-<div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
-  <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
-    <div class="rotate-icon" aria-hidden="true">↻</div>
-    <div class="rotate-text">
-      Für bessere Übersicht bitte <strong>quer drehen</strong>.
+<body>
+  <!-- Hinweis auf kleinen Geräten im Hochformat -->
+  <div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
+    <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
+      <div class="rotate-icon" aria-hidden="true">↻</div>
+      <div class="rotate-text">
+        Für bessere Übersicht bitte <strong>quer drehen</strong>.
+      </div>
     </div>
   </div>
-</div>
-<body>
 <header class="app-header">
   <div class="container row between center wrap">
     <div class="row center gap-12">
       <div class="logo">
         <img src="Maniacs_Logo_w.png" alt="Logo" />
       </div>
-      <h1 class="app-title">TEAM MANIACS <span class="muted">· STATS</span></h1>
+      <h1 class="app-title">TEAM MANIACS <span class="muted">· STATISTIK</span></h1>
     </div>
 
-    <div class="row center gap-8">
+    <div class="row center gap-8 header-auth">
       <span id="user-info" class="muted"></span>
       <span id="role-badge" class="role-badge hidden" aria-label="Admin" title="Admin">👑 Admin</span>
       <form id="login-form" class="row center gap-8" autocomplete="on" aria-label="Login Formular">
@@ -37,16 +35,16 @@
         <input id="login-pass" type="password" placeholder="Passwort" required />
         <button type="submit" class="btn">Login</button>
       </form>
-      <button id="btn-logout" class="btn ghost hidden">Logout</button>
+      <button id="btn-logout" class="btn ghost hidden">Abmelden</button>
     </div>
   </div>
 
   <nav class="tabs container" aria-label="Bereiche">
     <button class="tab active" data-tab="dashboard">Dashboard</button>
-    <button class="tab" data-tab="players">Players</button>
-    <button class="tab" data-tab="matches">Matches</button>
+    <button class="tab" data-tab="players">Spieler</button>
+    <button class="tab" data-tab="matches">Spiele</button>
     <button class="tab" data-tab="events">Events</button>
-    <button class="tab" data-tab="sponsors">Sponsors</button>
+    <button class="tab" data-tab="sponsors">Sponsoren</button>
   </nav>
 </header>
 
@@ -54,38 +52,40 @@
   <!-- DASHBOARD -->
   <section id="view-dashboard" class="view active" aria-labelledby="dash-title">
     <div class="card dashboard-kpis">
-      <h3 id="dash-title" class="dashboard-title">Team Stats</h3>
+      <h3 id="dash-title" class="dashboard-title">Teamstatistik</h3>
 <div class="kpi-row">
   <div class="kpi-box">
-    <div class="kpi-label">Players</div>
+    <div class="kpi-label">Spieler</div>
     <div class="kpi-value" id="kpi-players">0</div>
   </div>
   <div class="kpi-box">
-    <div class="kpi-label">Wins Total</div>
+    <div class="kpi-label">Siege gesamt</div>
     <div class="kpi-value" id="kpi-wins">0</div>
   </div>
-  <!-- NEU: Streak Leader -->
   <div class="kpi-box">
-    <div class="kpi-label">Streak Leader</div>
+    <div class="kpi-label">Top 8 gesamt</div>
+    <div class="kpi-value" id="kpi-top8">0</div>
+  </div>
+  <div class="kpi-box">
+    <div class="kpi-label">Serienführer</div>
     <div class="kpi-value streak" id="kpi-streak">—</div>
   </div>
 </div>
       <div class="row end" style="margin-top:16px;">
-        <button class="btn ghost" id="export-stats">Export Stats (CSV)</button>
+        <button class="btn ghost" id="export-stats">Statistik exportieren (CSV)</button>
       </div>
     </div>
 
     <div class="card">
-      <h3>Last Matches</h3>
-      <!-- ADD: table-wrap for horizontal scroll on small screens -->
+      <h3>Letzte Spiele</h3>
       <div class="table-wrap">
-        <table id="latest-results" aria-label="Letzte Matches Tabelle">
+        <table id="latest-results" aria-label="Letzte Spiele Tabelle">
           <thead>
             <tr>
-              <th scope="col">Player</th>
+              <th scope="col">Spieler</th>
               <th scope="col">Deck</th>
-              <th scope="col">Opponents Deck</th>
-              <th scope="col">Result</th>
+              <th scope="col">Gegner-Deck</th>
+              <th scope="col">Ergebnis</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -97,19 +97,18 @@
   <!-- PLAYERS -->
   <section id="view-players" class="view" aria-labelledby="players-title">
     <div class="row" style="gap:8px;margin-bottom:8px;">
-      <button class="btn hidden" id="btn-open-player">+ Player</button>
-      <button class="btn ghost" id="export-players">Export Players (CSV)</button>
+      <button class="btn hidden" id="btn-open-player">+ Spieler</button>
+      <button class="btn ghost" id="export-players">Spieler exportieren (CSV)</button>
     </div>
     <div class="card">
-      <!-- ADD: table-wrap -->
       <div class="table-wrap">
-        <table id="players-table" aria-label="Players Tabelle">
+        <table id="players-table" aria-label="Spieler Tabelle">
           <thead>
             <tr>
               <th scope="col">Name</th>
-              <th scope="col">Record</th>
-              <th scope="col">Win %</th>
-              <th scope="col">Deck</th>
+              <th scope="col">Bilanz</th>
+              <th scope="col">Sieg %</th>
+              <th scope="col">Letztes Sieger-Deck</th>
               <th scope="col"></th>
             </tr>
           </thead>
@@ -125,55 +124,54 @@
 
       <!-- Formular zum Match-Eintragen -->
       <div class="card" id="matches-form-card">
-        <h3 id="matches-title">Enter Match</h3>
-        <form id="match-form" class="form-grid" aria-label="Match erfassen">
+        <h3 id="matches-title">Spiel erfassen</h3>
+        <form id="match-form" class="form-grid" aria-label="Spiel erfassen">
           <input type="date" id="m-date" aria-label="Datum" />
 
-          <select id="m-player" aria-label="Player auswählen"></select>
+          <select id="m-player" aria-label="Spieler auswählen"></select>
 
           <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck" />
-          <input type="text" id="m-opp" placeholder="Opponents Deck" aria-label="Gegner" />
+          <input type="text" id="m-opp" placeholder="Gegner-Deck" aria-label="Gegner-Deck" />
 
           <!-- Match-Ergebnis -->
           <select id="m-res" aria-label="Ergebnis">
-            <option value="W">Win</option>
-            <option value="L">Loss</option>
-            <option value="D">Draw</option>
+            <option value="W">Sieg</option>
+            <option value="L">Niederlage</option>
+            <option value="D">Unentschieden</option>
           </select>
 
           <!-- Event-Level -->
-          <select id="m-tier" aria-label="Event-Level">
-            <option value="L">Local</option>
+          <select id="m-tier" aria-label="Turnier-Level">
+            <option value="L">Lokal</option>
             <option value="R">Regional</option>
             <option value="I">International</option>
-            <option value="C">Challenge</option>
-            <option value="S">Special</option>
-            <option value="W">Worlds</option>
+            <option value="C">Herausforderung</option>
+            <option value="S">Spezial</option>
+            <option value="W">Weltmeisterschaft</option>
           </select>
 
           <!-- Freitext-Kommentar zum Event -->
           <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" aria-label="Event-Notiz" />
 
-          <button type="submit" class="btn">Save</button>
+          <button type="submit" class="btn">Speichern</button>
         </form>
       </div>
 
       <!-- Match-Liste -->
       <div class="card" id="matches-list-card">
         <div class="row between center wrap">
-          <h3>All Matches</h3>
-          <button class="btn ghost" id="export-matches">Export Matches (CSV)</button>
+          <h3>Alle Spiele</h3>
+          <button class="btn ghost" id="export-matches">Spiele exportieren (CSV)</button>
         </div>
-        <!-- ADD: table-wrap -->
         <div class="table-wrap">
-          <table id="matches-table" aria-label="Matches Tabelle">
+          <table id="matches-table" aria-label="Spiele Tabelle">
             <thead>
               <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Player</th>
+                <th scope="col">Datum</th>
+                <th scope="col">Spieler</th>
                 <th scope="col">Deck</th>
-                <th scope="col">Opponents Deck</th>
-                <th scope="col">Result</th>
+                <th scope="col">Gegner-Deck</th>
+                <th scope="col">Ergebnis</th>
                 <th scope="col">Event</th>
                 <th scope="col"></th>
               </tr>
@@ -190,30 +188,29 @@
   <section id="view-events" class="view" aria-labelledby="events-title">
     <div class="grid-2">
       <div class="card" id="events-form-card">
-        <h3 id="events-title">Enter Event</h3>
+        <h3 id="events-title">Event erfassen</h3>
         <form id="event-form" class="form-grid" aria-label="Event erfassen">
-          <input type="text" id="ev-name" placeholder="Event-Name" required aria-label="Event-Name" />
+          <input type="text" id="ev-name" placeholder="Eventname" required aria-label="Eventname" />
           <input type="date" id="ev-date" required aria-label="Datum" />
-          <input type="text" id="ev-loc" placeholder="Location" required aria-label="Ort" />
+          <input type="text" id="ev-loc" placeholder="Ort" required aria-label="Ort" />
           <input type="text" id="ev-type" placeholder="Typ" aria-label="Typ" />
-          <button type="submit" class="btn">Save</button>
+          <button type="submit" class="btn">Speichern</button>
         </form>
       </div>
 
       <div class="card" id="events-list-card">
         <div class="row between center wrap">
           <h3>Events</h3>
-          <button class="btn ghost" id="export-events">Export Events (CSV)</button>
+          <button class="btn ghost" id="export-events">Events exportieren (CSV)</button>
         </div>
-        <!-- ADD: table-wrap -->
         <div class="table-wrap">
           <table id="events-table" aria-label="Events Tabelle">
             <thead>
               <tr>
-                <th scope="col">Date</th>
+                <th scope="col">Datum</th>
                 <th scope="col">Name</th>
-                <th scope="col">Location</th>
-                <th scope="col">Type</th>
+                <th scope="col">Ort</th>
+                <th scope="col">Typ</th>
                 <th scope="col"></th>
               </tr>
             </thead>
@@ -228,18 +225,18 @@
   <section id="view-sponsors" class="view" aria-labelledby="sponsors-title">
     <div class="grid-2">
       <div class="card" id="sponsor-form-card">
-        <h3 id="sponsors-title">Enter Sponsor</h3>
+        <h3 id="sponsors-title">Sponsor erfassen</h3>
         <form id="sponsor-form" class="form-grid" aria-label="Sponsor erfassen">
-          <input type="text" id="sp-name" placeholder="Sponsor" required aria-label="Sponsor-Name" />
+          <input type="text" id="sp-name" placeholder="Sponsorname" required aria-label="Sponsor-Name" />
           <input type="url" id="sp-url" placeholder="https://…" aria-label="Sponsor-URL" />
-          <button type="submit" class="btn">Save</button>
+          <button type="submit" class="btn">Speichern</button>
         </form>
       </div>
 
       <div class="card" id="sponsor-list-card">
         <div class="row between center wrap">
-          <h3>Active Sponsors</h3>
-          <button class="btn ghost" id="export-sponsors">Export Sponsors (CSV)</button>
+          <h3>Aktive Sponsoren</h3>
+          <button class="btn ghost" id="export-sponsors">Sponsoren exportieren (CSV)</button>
         </div>
         <ul id="sponsor-list" class="list" aria-label="Sponsorenliste"></ul>
       </div>
@@ -248,10 +245,10 @@
 </main>
 
 <dialog id="player-modal" class="sheet" aria-labelledby="player-modal-title">
-  <form id="player-form" class="modal-form" aria-label="Player anlegen">
+  <form id="player-form" class="modal-form" aria-label="Spieler anlegen">
     <header class="modal-head">
-      <h3 id="player-modal-title">New Player</h3>
-      <button type="button" class="icon-btn close" aria-label="Close"
+      <h3 id="player-modal-title">Neuer Spieler</h3>
+      <button type="button" class="icon-btn close" aria-label="Schließen"
               onclick="this.closest('dialog').close()">✕</button>
     </header>
 
@@ -259,10 +256,14 @@
       <label for="p-name">Name</label>
       <input id="p-name" type="text" placeholder="z. B. Dario Schweizer" required />
     </div>
+    <div class="form-field">
+      <label for="p-decks">Decks (kommagetrennt)</label>
+      <input id="p-decks" type="text" placeholder="z. B. Gardevoir, Dragapult" />
+    </div>
 
     <footer class="modal-actions">
-      <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
-      <button class="btn" type="submit">Save</button>
+      <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
+      <button class="btn" type="submit">Speichern</button>
     </footer>
   </form>
 </dialog>

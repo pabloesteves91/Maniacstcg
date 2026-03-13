@@ -101,7 +101,17 @@ tbody td{
   border-bottom:1px solid var(--line-soft);
   white-space:nowrap;
 }
-.table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--line-soft);
+  border-radius:12px;
+}
+.table-wrap table{ min-width:720px; }
+#latest-results{ min-width:560px; }
+#players-table{ min-width:700px; }
+#matches-table{ min-width:860px; }
+#events-table{ min-width:620px; }
 
 /* KPIs / Badges */
 .pill{ padding:6px 10px; border-radius:16px; background:rgba(255,255,255,.06); }
@@ -201,6 +211,20 @@ dialog{
   font-weight:600;
   color:var(--muted);
   letter-spacing:1px;
+}
+.header-auth{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  max-width:100%;
+}
+#user-info{
+  max-width:280px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 @media (max-width:720px){
   .app-header .logo img{ height:28px; }
@@ -321,18 +345,36 @@ dialog{
   .app-header .container{ row-gap:10px; }
   .app-header .logo img{ height:32px; }
   .app-header .app-title{ line-height:1.15; }
+  .header-auth{ width:100%; justify-content:flex-start; }
   #role-badge{ margin-left:0; }
 }
 @media (max-width:780px){
+  .header-auth{
+    align-items:stretch;
+    gap:8px;
+  }
+  #user-info{ max-width:100%; }
   #login-form{
     flex-direction:column;
     align-items:stretch;
-    width:min(360px,100%);
+    width:min(380px,100%);
     gap:8px;
   }
   #login-form input,
   #login-form button{ width:100%; }
-  #btn-logout{ width:100%; }
+  #btn-logout{
+    width:min(380px,100%);
+    align-self:flex-start;
+  }
+  #role-badge{
+    align-self:flex-start;
+    margin-left:0;
+  }
+  thead th,
+  tbody td{
+    padding:8px 9px;
+    font-size:14px;
+  }
 }
 @media (max-width:520px){
   .app-header .logo img{ height:28px; }
