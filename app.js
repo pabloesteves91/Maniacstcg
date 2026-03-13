@@ -132,7 +132,7 @@ if (window.__MANIACS_INIT__) {
   const playerModal = $('#player-modal');
 function openPlayerModal(){
   if(!currentUser) return alert('Bitte zuerst einloggen.');
-  if(!isAdminUI)   return alert('Nur Admins dürfen Players anlegen.');
+  if(!isAdminUI)   return alert('Nur Admins dürfen Spieler anlegen.');
   submitting.player = false; // Reset, falls vorher abgebrochen wurde
   try { playerModal.showModal(); } catch { playerModal.setAttribute('open',''); }
 }
@@ -146,7 +146,7 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   if (submitting.player) return;
 
   if (!currentUser) { alert('Login erforderlich.'); return; }
-  if (!isAdminUI)   { alert('Nur Admins dürfen Players speichern.'); return; }
+  if (!isAdminUI)   { alert('Nur Admins dürfen Spieler speichern.'); return; }
 
   const name  = $('#p-name').value.trim();
   const decks = $('#p-decks') ? $('#p-decks').value.split(',').map(s=>s.trim()).filter(Boolean) : [];
@@ -191,7 +191,7 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
       b.onclick = async ()=>{
         if(!currentUser) return alert('Login erforderlich.');
         if(!isAdminUI)   return alert('Nur Admins dürfen löschen.');
-        if(!confirm('Diesen Player wirklich löschen?')) return;
+        if(!confirm('Diesen Spieler wirklich löschen?')) return;
         try { await deleteDoc(docRef(C_PLAYERS, b.dataset.delP)); }
         catch(err){ alert('Fehler beim Löschen: '+(err.message||err)); }
       };
@@ -256,12 +256,12 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   /* ------------------ Matches ------------------ */
   function tierToText(code){
     switch(code){
-      case 'L': return 'Local';
+      case 'L': return 'Lokal';
       case 'R': return 'Regional';
       case 'I': return 'International';
-      case 'C': return 'Challenge';
-      case 'S': return 'Special';
-      case 'W': return 'Worlds';
+      case 'C': return 'Herausforderung';
+      case 'S': return 'Spezial';
+      case 'W': return 'Weltmeisterschaft';
       default: return '';
     }
   }
@@ -397,18 +397,19 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
       const wlExisting = teamSummaryEl.querySelector('[data-stat="wld"]');
       const wlLi = wlExisting || document.createElement('li');
       wlLi.setAttribute('data-stat','wld');
-      wlLi.innerHTML = `<strong>Team Record</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
+      wlLi.innerHTML = `<strong>Team-Bilanz</strong><span class="grow"></span>${teamW}-${teamL}-${teamD}`;
       if (!wlExisting) teamSummaryEl.appendChild(wlLi);
 
       if (!teamSummaryEl.querySelector('[data-stat="top8"]')) {
         const top8Li = document.createElement('li');
         top8Li.setAttribute('data-stat','top8');
-        top8Li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${$('#kpi-top8').textContent}`;
+        const kpiTop8 = $('#kpi-top8');
+        top8Li.innerHTML = `<strong>Top 8 (Team)</strong><span class="grow"></span>${kpiTop8 ? kpiTop8.textContent : 0}`;
         teamSummaryEl.appendChild(top8Li);
       }
     }
 
-    // Top Deck (Wins)
+    // Top Deck (Siege)
     if (topDeckEl) {
       topDeckEl.innerHTML = '';
       const decks = Object.keys(deckWinCounts);
@@ -416,7 +417,7 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
         decks.sort((a,b)=>deckWinCounts[b]-deckWinCounts[a]);
         const best = decks[0];
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${best}</strong><span class="grow"></span>${deckWinCounts[best]} Wins`;
+        li.innerHTML = `<strong>${best}</strong><span class="grow"></span>${deckWinCounts[best]} Siege`;
         topDeckEl.appendChild(li);
       } else {
         const li = document.createElement('li');
@@ -484,16 +485,30 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
     e.target.reset();
   });
 
+  function parseSponsorUrl(url){
+    const raw = String(url || '').trim();
+    if (!raw) return { href: '#', host: '—', valid: false };
+    const normalized = /^(https?:)?\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      const u = new URL(normalized);
+      if (!/^https?:$/.test(u.protocol)) throw new Error('invalid protocol');
+      return { href: u.href, host: u.host || raw, valid: true };
+    } catch {
+      return { href: '#', host: 'Ungültige URL', valid: false };
+    }
+  }
+
   const sponsList=$('#sponsor-list');
   onSnapshot(col(C_SPONS), (snap)=>{
     const items=[];
     snap.forEach(d=>{
       const s={id:d.id, ...d.data()};
-      const host = s.url ? new URL(s.url).host : '—';
+      const parsedUrl = parseSponsorUrl(s.url);
+      const anchorAttrs = parsedUrl.valid ? 'target="_blank" rel="noopener"' : '';
       items.push(`
         <li>
           <strong>${s.name}</strong>
-          <a class="muted" href="${s.url||'#'}" target="_blank" rel="noopener">${host}</a>
+          <a class="muted" href="${parsedUrl.href}" ${anchorAttrs}>${parsedUrl.host}</a>
           <span class="grow"></span>
           <button class="btn ghost admin-only" data-del-s="${s.id}">Entfernen</button>
         </li>
@@ -520,7 +535,7 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   $('#export-matches')?.addEventListener('click', async ()=>{
     const snap=await getDocs(query(col(C_MATCHES), orderBy('date','desc'))); const rows=[];
     function t(code){
-      switch(code){case'L':return'Local';case'R':return'Regional';case'I':return'International';case'C':return'Challenge';case'S':return'Special';case'W':return'Worlds';default:return'';}
+      switch(code){case'L':return'Lokal';case'R':return'Regional';case'I':return'International';case'C':return'Herausforderung';case'S':return'Spezial';case'W':return'Weltmeisterschaft';default:return'';}
     }
     snap.forEach(d=>{
       const m=d.data();
@@ -544,7 +559,7 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   $('#export-sponsors')?.addEventListener('click', async ()=>{
     const snap=await getDocs(col(C_SPONS)); const rows=[];
     snap.forEach(d=>{
-      const s=d.data(); const host=s.url?new URL(s.url).host:'';
+      const s=d.data(); const host=parseSponsorUrl(s.url).host;
       rows.push({ name:s.name||'', url:s.url||'', host });
     });
     downloadCSV('sponsors.csv', rows, ['name','url','host']);
