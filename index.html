@@ -1,290 +1,631 @@
 <!DOCTYPE html>
-<html lang="de">
+<html class="dark" lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TEAM MANIACS</title>
   <link rel="icon" href="Maniacs_Logo_w.png" type="image/png" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface":                  "#101419",
+            "on-surface":               "#dfe2eb",
+            "on-surface-variant":       "#e4bebc",
+            "background":               "#101419",
+            "surface-container-lowest": "#0a0e14",
+            "surface-container-low":    "#181c22",
+            "surface-container":        "#1c2026",
+            "surface-container-high":   "#262a30",
+            "surface-container-highest":"#31353b",
+            "surface-bright":           "#353940",
+            "surface-variant":          "#31353b",
+            "surface-dim":              "#101419",
+            "primary":                  "#E30613",
+            "primary-container":        "#ff535b",
+            "on-primary":               "#ffffff",
+            "on-primary-container":     "#5b000e",
+            "inverse-primary":          "#bb152c",
+            "secondary":                "#98cdf2",
+            "secondary-container":      "#0b4e6e",
+            "on-secondary-container":   "#8abfe4",
+            "tertiary":                 "#ffb3ad",
+            "tertiary-container":       "#ff5451",
+            "outline-variant":          "#5b403f",
+            "outline":                  "#ab8987",
+            "error":                    "#ffb4ab",
+            "error-container":          "#93000a",
+          },
+          fontFamily: {
+            "headline": ["Inter", "sans-serif"],
+            "body":     ["Inter", "sans-serif"],
+            "label":    ["Space Grotesk", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="styles.css" />
-  <script type="module" src="app.js?v=15"></script>
+  <script type="module" src="app.js?v=16"></script>
 </head>
-<body>
-  <!-- Hinweis auf kleinen Geräten im Hochformat -->
-  <div id="rotate-tip" class="rotate-overlay" role="status" aria-live="polite" aria-atomic="true">
-    <div class="rotate-card" role="dialog" aria-label="Hinweis: Bitte Gerät drehen">
-      <div class="rotate-icon" aria-hidden="true">↻</div>
-      <div class="rotate-text">
-        Für bessere Übersicht bitte <strong>quer drehen</strong>.
+<body class="font-body bg-[#101419] text-[#dfe2eb] antialiased">
+
+  <!-- ═══════════════════════════════════════════
+       SIDEBAR  (Desktop only)
+  ═══════════════════════════════════════════ -->
+  <aside class="fixed left-0 top-0 h-screen w-64 hidden md:flex flex-col bg-slate-950 shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-40">
+
+    <!-- Logo -->
+    <div class="p-6 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center overflow-hidden shrink-0">
+        <img src="Maniacs_Logo_w.png" alt="Team Maniacs Logo" class="w-8 h-8 object-contain" />
       </div>
-    </div>
-  </div>
-<header class="app-header">
-  <div class="container row between center wrap">
-    <div class="row center gap-12">
-      <div class="logo">
-        <img src="Maniacs_Logo_w.png" alt="Logo" />
+      <div>
+        <h1 class="text-lg font-black tracking-tighter text-white leading-tight font-headline">Team Maniacs</h1>
+        <p class="text-[10px] uppercase tracking-widest text-red-500 font-bold font-label">Statistik</p>
       </div>
-      <h1 class="app-title">TEAM MANIACS <span class="muted">· STATISTIK</span></h1>
     </div>
 
-    <div class="row center gap-8 header-auth">
-      <span id="user-info" class="muted"></span>
-      <span id="role-badge" class="role-badge hidden" aria-label="Admin" title="Admin">👑 Admin</span>
-      <form id="login-form" class="row center gap-8" autocomplete="on" aria-label="Login Formular">
-        <input id="login-email" type="email" placeholder="E-Mail" required />
-        <input id="login-pass" type="password" placeholder="Passwort" required />
-        <button type="submit" class="btn">Login</button>
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 space-y-1 mt-2" aria-label="Hauptnavigation">
+      <button class="tab w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white transition-all hover:bg-slate-800/50 text-left" data-tab="dashboard" aria-label="Dashboard">
+        <span class="material-symbols-outlined text-xl">dashboard</span>
+        <span class="font-label text-sm font-medium">Dashboard</span>
+      </button>
+      <button class="tab w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white transition-all hover:bg-slate-800/50 text-left" data-tab="players" aria-label="Spieler">
+        <span class="material-symbols-outlined text-xl">group</span>
+        <span class="font-label text-sm font-medium">Spieler</span>
+      </button>
+      <button class="tab w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white transition-all hover:bg-slate-800/50 text-left" data-tab="matches" aria-label="Spiele">
+        <span class="material-symbols-outlined text-xl">history</span>
+        <span class="font-label text-sm font-medium">Spiele</span>
+      </button>
+      <button class="tab w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white transition-all hover:bg-slate-800/50 text-left" data-tab="events" aria-label="Events">
+        <span class="material-symbols-outlined text-xl">calendar_month</span>
+        <span class="font-label text-sm font-medium">Events</span>
+      </button>
+      <button class="tab admin-only w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white transition-all hover:bg-slate-800/50 text-left" data-tab="sponsors" aria-label="Sponsoren">
+        <span class="material-symbols-outlined text-xl">handshake</span>
+        <span class="font-label text-sm font-medium">Sponsoren</span>
+      </button>
+    </nav>
+
+    <!-- Auth -->
+    <div class="px-4 pb-6 pt-4 border-t border-white/5 space-y-3 mt-4">
+      <div class="flex items-center gap-2 px-1 min-h-[24px]">
+        <span id="user-info" class="text-xs text-slate-400 font-label truncate flex-1"></span>
+        <span id="role-badge" class="role-badge hidden" aria-label="Admin" title="Admin">👑 Admin</span>
+      </div>
+      <form id="login-form" class="space-y-2" autocomplete="on" aria-label="Login Formular">
+        <input id="login-email" type="email" placeholder="E-Mail" required
+          class="w-full bg-[#0a0e14] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all" />
+        <input id="login-pass" type="password" placeholder="Passwort" required
+          class="w-full bg-[#0a0e14] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all" />
+        <button type="submit"
+          class="w-full bg-gradient-to-br from-[#ff535b] to-[#bb152c] text-white font-bold py-2.5 rounded-xl text-sm font-label shadow-lg shadow-red-900/30 hover:brightness-110 active:scale-95 transition-all">
+          Login
+        </button>
       </form>
-      <button id="btn-logout" class="btn ghost hidden">Abmelden</button>
+      <button id="btn-logout"
+        class="hidden w-full py-2.5 rounded-xl border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-all text-sm font-label">
+        Abmelden
+      </button>
     </div>
-  </div>
+  </aside>
 
-  <nav class="tabs container" aria-label="Bereiche">
-    <button class="tab active" data-tab="dashboard">Dashboard</button>
-    <button class="tab" data-tab="players">Spieler</button>
-    <button class="tab" data-tab="matches">Spiele</button>
-    <button class="tab" data-tab="events">Events</button>
-    <button class="tab" data-tab="sponsors">Sponsoren</button>
+  <!-- ═══════════════════════════════════════════
+       TOP APP BAR
+  ═══════════════════════════════════════════ -->
+  <header class="sticky top-0 z-30 flex justify-between items-center px-5 md:pl-72 h-14 bg-[#101419]/80 backdrop-blur-xl border-b border-white/5">
+    <!-- Mobile: Logo + Titel -->
+    <div class="flex items-center gap-2.5 md:hidden">
+      <img src="Maniacs_Logo_w.png" alt="Logo" class="h-7 w-auto" />
+      <span class="font-black text-base tracking-tight font-headline">Team Maniacs</span>
+    </div>
+    <!-- Desktop: Page-Titel (wird nicht dynamisch gesetzt — bleibt leer) -->
+    <div class="hidden md:block"></div>
+
+    <!-- Mobile-only: Auth-Bereich (kompakt) -->
+    <div class="flex items-center gap-3 md:hidden">
+      <span class="text-xs text-slate-400 font-label truncate max-w-[140px]" id="user-info-mobile"></span>
+      <span id="role-badge-mobile" class="role-badge hidden text-xs" title="Admin">👑</span>
+    </div>
+  </header>
+
+  <!-- Mobile Auth Panel (nur sichtbar wenn ausgeloggt, per JS gesteuert über #login-form) -->
+  <!-- Auf Mobile: Login-Form im Dashboard-View unten -->
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════ -->
+  <main class="md:ml-64 pb-24 md:pb-8 min-h-screen">
+
+    <!-- ─── DASHBOARD ─── -->
+    <section id="view-dashboard" class="view active p-5 md:p-8 max-w-7xl mx-auto space-y-6" aria-labelledby="dash-title">
+
+      <!-- KPI Kacheln -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Spieler -->
+        <div class="bg-[#31353b] rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.02] transition-transform group cursor-default relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Spieler</p>
+            <span class="material-symbols-outlined text-secondary text-xl opacity-20 group-hover:opacity-100 transition-opacity">groups</span>
+          </div>
+          <span id="kpi-players" class="text-4xl font-black tracking-tighter text-[#dfe2eb]">0</span>
+          <div class="h-0.5 w-full bg-[#262a30] rounded-full overflow-hidden">
+            <div class="h-full bg-secondary w-2/3"></div>
+          </div>
+        </div>
+        <!-- Siege -->
+        <div class="bg-[#31353b] rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.02] transition-transform group cursor-default relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Siege</p>
+            <span class="material-symbols-outlined text-[#E30613] text-xl opacity-20 group-hover:opacity-100 transition-opacity">emoji_events</span>
+          </div>
+          <span id="kpi-wins" class="text-4xl font-black tracking-tighter text-[#dfe2eb]">0</span>
+          <div class="flex gap-1">
+            <div class="h-0.5 flex-1 bg-[#E30613] rounded-full"></div>
+            <div class="h-0.5 flex-1 bg-[#E30613] rounded-full"></div>
+            <div class="h-0.5 flex-1 bg-[#E30613] rounded-full"></div>
+            <div class="h-0.5 flex-1 bg-[#262a30] rounded-full"></div>
+          </div>
+        </div>
+        <!-- Top 8 -->
+        <div class="bg-[#31353b] rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.02] transition-transform group cursor-default relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Top 8</p>
+            <span class="material-symbols-outlined text-tertiary text-xl opacity-20 group-hover:opacity-100 transition-opacity">military_tech</span>
+          </div>
+          <span id="kpi-top8" class="text-4xl font-black tracking-tighter text-[#dfe2eb]">0</span>
+          <p class="text-[10px] text-on-surface-variant font-label italic">Platzierungen gesamt</p>
+        </div>
+        <!-- Serienführer -->
+        <div class="bg-[#31353b] rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.02] transition-transform group cursor-default relative overflow-hidden">
+          <div class="absolute -right-3 -top-3 w-20 h-20 bg-[#E30613]/5 rounded-full blur-2xl"></div>
+          <div class="flex items-start justify-between">
+            <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Serienführer</p>
+            <span class="material-symbols-outlined text-secondary text-xl opacity-20 group-hover:opacity-100 transition-opacity">leaderboard</span>
+          </div>
+          <span id="kpi-streak" class="text-2xl font-black tracking-tighter text-[#E30613] leading-tight">—</span>
+          <p class="text-[10px] text-secondary font-label uppercase font-bold">Aktuell führend</p>
+        </div>
+      </div>
+
+      <!-- Letzte Spiele -->
+      <div class="bg-[#181c22] rounded-xl overflow-hidden">
+        <div class="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h3 id="dash-title" class="text-lg font-bold text-[#dfe2eb] tracking-tight font-headline">Letzte Spiele</h3>
+            <p class="text-xs text-on-surface-variant font-label mt-0.5">Neueste Match-Ergebnisse des Teams</p>
+          </div>
+          <button id="export-stats"
+            class="px-4 py-2 rounded-lg border border-white/15 hover:bg-[#31353b] text-[#E30613] font-bold text-xs transition-all flex items-center gap-2 font-label">
+            <span class="material-symbols-outlined text-sm">download</span>
+            CSV Export
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table id="latest-results" aria-label="Letzte Spiele Tabelle" class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#31353b]/50">
+                <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Spieler</th>
+                <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Deck</th>
+                <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Gegner-Deck</th>
+                <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant text-center">Ergebnis</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mobile Login (nur sichtbar wenn nicht eingeloggt) -->
+      <div class="md:hidden">
+        <div class="bg-[#181c22] rounded-xl p-5 space-y-3 mobile-login-card">
+          <p class="text-sm font-bold font-label text-on-surface-variant uppercase tracking-widest">Login</p>
+          <form class="space-y-2 mobile-login-proxy" autocomplete="on">
+            <input type="email" placeholder="E-Mail" required
+              class="w-full bg-[#0a0e14] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 transition-all" />
+            <input type="password" placeholder="Passwort" required
+              class="w-full bg-[#0a0e14] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500/50 transition-all" />
+            <button type="submit"
+              class="w-full bg-gradient-to-br from-[#ff535b] to-[#bb152c] text-white font-bold py-2.5 rounded-xl text-sm font-label active:scale-95 transition-all">
+              Login
+            </button>
+          </form>
+          <button
+            class="mobile-logout-proxy hidden w-full py-2.5 rounded-xl border border-white/15 text-slate-400 hover:text-white transition-all text-sm font-label">
+            Abmelden
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ─── SPIELER ─── -->
+    <section id="view-players" class="view p-5 md:p-8 max-w-7xl mx-auto space-y-6" aria-labelledby="players-title">
+
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <div>
+          <span class="font-label text-secondary uppercase tracking-[0.2em] text-xs font-bold">Roster</span>
+          <h2 id="players-title" class="text-3xl font-black tracking-tighter text-[#dfe2eb] mt-1 font-headline">Spieler</h2>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-open-player"
+            class="hidden px-4 py-2.5 rounded-xl border border-white/20 text-[#E30613] font-bold text-sm font-label hover:bg-[#E30613]/10 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            Spieler hinzufügen
+          </button>
+          <button id="export-players"
+            class="px-4 py-2.5 rounded-xl border border-white/15 text-on-surface-variant font-bold text-sm font-label hover:bg-[#31353b] transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">download</span>
+            CSV Export
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-[#181c22] rounded-xl overflow-hidden shadow-2xl">
+        <div class="table-wrap">
+          <table id="players-table" aria-label="Spieler Tabelle" class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#262a30]/50 border-b border-white/5">
+                <th class="px-6 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Name</th>
+                <th class="px-6 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Bilanz</th>
+                <th class="px-6 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Sieg %</th>
+                <th class="px-6 py-4 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Letztes Sieger-Deck</th>
+                <th class="px-6 py-4"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ─── SPIELE ─── -->
+    <section id="view-matches" class="view p-5 md:p-8 max-w-7xl mx-auto" aria-labelledby="matches-title">
+      <div class="grid-2">
+
+        <!-- Formular -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="matches-form-card">
+          <div class="p-5 border-b border-white/5 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#E30613] text-xl">history_edu</span>
+            <h3 id="matches-title" class="text-lg font-bold tracking-tight font-headline">Spiel erfassen</h3>
+          </div>
+          <div class="p-5">
+            <form id="match-form" class="form-grid" aria-label="Spiel erfassen">
+              <input type="date" id="m-date" aria-label="Datum"
+                class="match-input" />
+              <select id="m-player" aria-label="Spieler auswählen"
+                class="match-input"></select>
+              <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck"
+                class="match-input" />
+              <input type="text" id="m-opp" placeholder="Gegner-Deck" aria-label="Gegner-Deck"
+                class="match-input" />
+              <select id="m-res" aria-label="Ergebnis"
+                class="match-input">
+                <option value="W">Sieg</option>
+                <option value="L">Niederlage</option>
+                <option value="D">Unentschieden</option>
+              </select>
+              <select id="m-tier" aria-label="Turnier-Level"
+                class="match-input">
+                <option value="L">Lokal</option>
+                <option value="R">Regional</option>
+                <option value="I">International</option>
+                <option value="C">Herausforderung</option>
+                <option value="S">Spezial</option>
+                <option value="W">Weltmeisterschaft</option>
+              </select>
+              <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" aria-label="Event-Notiz"
+                class="match-input col-span-2" />
+              <button type="submit"
+                class="col-span-2 bg-gradient-to-br from-[#ff535b] to-[#bb152c] text-white font-bold py-3 rounded-xl text-sm font-label shadow-lg active:scale-[0.98] transition-all hover:brightness-110">
+                Speichern
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liste -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="matches-list-card">
+          <div class="p-5 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 class="text-lg font-bold tracking-tight font-headline">Alle Spiele</h3>
+            <button id="export-matches"
+              class="px-4 py-2 rounded-lg border border-white/15 text-on-surface-variant font-bold text-xs font-label hover:bg-[#31353b] transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">download</span>
+              CSV Export
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table id="matches-table" aria-label="Spiele Tabelle" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-[#262a30]/50 border-b border-white/5">
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Datum</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Spieler</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Deck</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Gegner-Deck</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant text-center">Erg.</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Event</th>
+                  <th class="px-5 py-3.5"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── EVENTS ─── -->
+    <section id="view-events" class="view p-5 md:p-8 max-w-7xl mx-auto" aria-labelledby="events-title">
+      <div class="grid-2">
+
+        <!-- Formular -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="events-form-card">
+          <div class="p-5 border-b border-white/5 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#E30613] text-xl">calendar_month</span>
+            <h3 id="events-title" class="text-lg font-bold tracking-tight font-headline">Event erfassen</h3>
+          </div>
+          <div class="p-5">
+            <form id="event-form" class="form-grid" aria-label="Event erfassen">
+              <input type="text" id="ev-name" placeholder="Eventname" required aria-label="Eventname"
+                class="match-input col-span-2" />
+              <input type="date" id="ev-date" required aria-label="Datum"
+                class="match-input" />
+              <input type="text" id="ev-loc" placeholder="Ort" required aria-label="Ort"
+                class="match-input" />
+              <input type="text" id="ev-type" placeholder="Typ" aria-label="Typ"
+                class="match-input col-span-2" />
+              <button type="submit"
+                class="col-span-2 bg-gradient-to-br from-[#ff535b] to-[#bb152c] text-white font-bold py-3 rounded-xl text-sm font-label shadow-lg active:scale-[0.98] transition-all hover:brightness-110">
+                Speichern
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liste -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="events-list-card">
+          <div class="p-5 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 class="text-lg font-bold tracking-tight font-headline">Events</h3>
+            <button id="export-events"
+              class="px-4 py-2 rounded-lg border border-white/15 text-on-surface-variant font-bold text-xs font-label hover:bg-[#31353b] transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">download</span>
+              CSV Export
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table id="events-table" aria-label="Events Tabelle" class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-[#262a30]/50 border-b border-white/5">
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Datum</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Name</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Ort</th>
+                  <th class="px-5 py-3.5 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Typ</th>
+                  <th class="px-5 py-3.5"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── SPONSOREN ─── -->
+    <section id="view-sponsors" class="view p-5 md:p-8 max-w-7xl mx-auto" aria-labelledby="sponsors-title">
+      <div class="grid-2">
+
+        <!-- Formular -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="sponsor-form-card">
+          <div class="p-5 border-b border-white/5 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#E30613] text-xl">handshake</span>
+            <h3 id="sponsors-title" class="text-lg font-bold tracking-tight font-headline">Sponsor erfassen</h3>
+          </div>
+          <div class="p-5">
+            <form id="sponsor-form" class="form-grid" aria-label="Sponsor erfassen">
+              <input type="text" id="sp-name" placeholder="Sponsorname" required aria-label="Sponsor-Name"
+                class="match-input col-span-2" />
+              <input type="url" id="sp-url" placeholder="https://…" aria-label="Sponsor-URL"
+                class="match-input col-span-2" />
+              <button type="submit"
+                class="col-span-2 bg-gradient-to-br from-[#ff535b] to-[#bb152c] text-white font-bold py-3 rounded-xl text-sm font-label shadow-lg active:scale-[0.98] transition-all hover:brightness-110">
+                Speichern
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liste -->
+        <div class="bg-[#181c22] rounded-xl overflow-hidden" id="sponsor-list-card">
+          <div class="p-5 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 class="text-lg font-bold tracking-tight font-headline">Aktive Sponsoren</h3>
+            <button id="export-sponsors"
+              class="px-4 py-2 rounded-lg border border-white/15 text-on-surface-variant font-bold text-xs font-label hover:bg-[#31353b] transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">download</span>
+              CSV Export
+            </button>
+          </div>
+          <ul id="sponsor-list" class="p-5 space-y-2" aria-label="Sponsorenliste"></ul>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       PLAYER MODAL
+  ═══════════════════════════════════════════ -->
+  <dialog id="player-modal" class="sheet" aria-labelledby="player-modal-title">
+    <form id="player-form" class="modal-form" aria-label="Spieler anlegen">
+      <header class="modal-head">
+        <h3 id="player-modal-title">Neuer Spieler</h3>
+        <button type="button" class="icon-btn close" aria-label="Schließen"
+                onclick="this.closest('dialog').close()">✕</button>
+      </header>
+      <div class="form-field">
+        <label for="p-name">Name</label>
+        <input id="p-name" type="text" placeholder="z. B. Dario Schweizer" required />
+      </div>
+      <div class="form-field">
+        <label for="p-decks">Decks (kommagetrennt)</label>
+        <input id="p-decks" type="text" placeholder="z. B. Gardevoir, Dragapult" />
+      </div>
+      <footer class="modal-actions">
+        <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
+        <button class="btn" type="submit">Speichern</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ═══════════════════════════════════════════
+       BOTTOM NAV  (Mobile only)
+  ═══════════════════════════════════════════ -->
+  <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center py-2.5 md:hidden
+              bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/60
+              rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.6)]"
+       aria-label="Mobile Navigation">
+
+    <button class="tab flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl active:bg-slate-800/40 transition-all" data-tab="dashboard">
+      <span class="material-symbols-outlined text-[22px]">dashboard</span>
+      <span class="text-[10px] font-medium font-label">Home</span>
+    </button>
+    <button class="tab flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl active:bg-slate-800/40 transition-all" data-tab="players">
+      <span class="material-symbols-outlined text-[22px]">group</span>
+      <span class="text-[10px] font-medium font-label">Spieler</span>
+    </button>
+    <button class="tab flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl active:bg-slate-800/40 transition-all" data-tab="matches">
+      <span class="material-symbols-outlined text-[22px]">history</span>
+      <span class="text-[10px] font-medium font-label">Spiele</span>
+    </button>
+    <button class="tab flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl active:bg-slate-800/40 transition-all" data-tab="events">
+      <span class="material-symbols-outlined text-[22px]">calendar_month</span>
+      <span class="text-[10px] font-medium font-label">Events</span>
+    </button>
+
   </nav>
-</header>
 
-<main class="container">
-  <!-- DASHBOARD -->
-  <section id="view-dashboard" class="view active" aria-labelledby="dash-title">
-    <div class="card dashboard-kpis">
-      <h3 id="dash-title" class="dashboard-title">Teamstatistik</h3>
-<div class="kpi-row">
-  <div class="kpi-box">
-    <div class="kpi-label">Spieler</div>
-    <div class="kpi-value" id="kpi-players">0</div>
-  </div>
-  <div class="kpi-box">
-    <div class="kpi-label">Siege gesamt</div>
-    <div class="kpi-value" id="kpi-wins">0</div>
-  </div>
-  <div class="kpi-box">
-    <div class="kpi-label">Top 8 gesamt</div>
-    <div class="kpi-value" id="kpi-top8">0</div>
-  </div>
-  <div class="kpi-box">
-    <div class="kpi-label">Serienführer</div>
-    <div class="kpi-value streak" id="kpi-streak">—</div>
-  </div>
-</div>
-      <div class="row end" style="margin-top:16px;">
-        <button class="btn ghost" id="export-stats">Statistik exportieren (CSV)</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Letzte Spiele</h3>
-      <div class="table-wrap">
-        <table id="latest-results" aria-label="Letzte Spiele Tabelle">
-          <thead>
-            <tr>
-              <th scope="col">Spieler</th>
-              <th scope="col">Deck</th>
-              <th scope="col">Gegner-Deck</th>
-              <th scope="col">Ergebnis</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- PLAYERS -->
-  <section id="view-players" class="view" aria-labelledby="players-title">
-    <div class="row" style="gap:8px;margin-bottom:8px;">
-      <button class="btn hidden" id="btn-open-player">+ Spieler</button>
-      <button class="btn ghost" id="export-players">Spieler exportieren (CSV)</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table id="players-table" aria-label="Spieler Tabelle">
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Bilanz</th>
-              <th scope="col">Sieg %</th>
-              <th scope="col">Letztes Sieger-Deck</th>
-              <th scope="col"></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- MATCHES -->
-  <section id="view-matches" class="view" aria-labelledby="matches-title">
-    <div class="grid-2">
-
-      <!-- Formular zum Match-Eintragen -->
-      <div class="card" id="matches-form-card">
-        <h3 id="matches-title">Spiel erfassen</h3>
-        <form id="match-form" class="form-grid" aria-label="Spiel erfassen">
-          <input type="date" id="m-date" aria-label="Datum" />
-
-          <select id="m-player" aria-label="Spieler auswählen"></select>
-
-          <input type="text" id="m-deck" placeholder="Deck" aria-label="Deck" />
-          <input type="text" id="m-opp" placeholder="Gegner-Deck" aria-label="Gegner-Deck" />
-
-          <!-- Match-Ergebnis -->
-          <select id="m-res" aria-label="Ergebnis">
-            <option value="W">Sieg</option>
-            <option value="L">Niederlage</option>
-            <option value="D">Unentschieden</option>
-          </select>
-
-          <!-- Event-Level -->
-          <select id="m-tier" aria-label="Turnier-Level">
-            <option value="L">Lokal</option>
-            <option value="R">Regional</option>
-            <option value="I">International</option>
-            <option value="C">Herausforderung</option>
-            <option value="S">Spezial</option>
-            <option value="W">Weltmeisterschaft</option>
-          </select>
-
-          <!-- Freitext-Kommentar zum Event -->
-          <input type="text" id="m-event" placeholder="Event (z. B. Frankfurt Regionals)" aria-label="Event-Notiz" />
-
-          <button type="submit" class="btn">Speichern</button>
-        </form>
-      </div>
-
-      <!-- Match-Liste -->
-      <div class="card" id="matches-list-card">
-        <div class="row between center wrap">
-          <h3>Alle Spiele</h3>
-          <button class="btn ghost" id="export-matches">Spiele exportieren (CSV)</button>
-        </div>
-        <div class="table-wrap">
-          <table id="matches-table" aria-label="Spiele Tabelle">
-            <thead>
-              <tr>
-                <th scope="col">Datum</th>
-                <th scope="col">Spieler</th>
-                <th scope="col">Deck</th>
-                <th scope="col">Gegner-Deck</th>
-                <th scope="col">Ergebnis</th>
-                <th scope="col">Event</th>
-                <th scope="col"></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- EVENTS -->
-  <section id="view-events" class="view" aria-labelledby="events-title">
-    <div class="grid-2">
-      <div class="card" id="events-form-card">
-        <h3 id="events-title">Event erfassen</h3>
-        <form id="event-form" class="form-grid" aria-label="Event erfassen">
-          <input type="text" id="ev-name" placeholder="Eventname" required aria-label="Eventname" />
-          <input type="date" id="ev-date" required aria-label="Datum" />
-          <input type="text" id="ev-loc" placeholder="Ort" required aria-label="Ort" />
-          <input type="text" id="ev-type" placeholder="Typ" aria-label="Typ" />
-          <button type="submit" class="btn">Speichern</button>
-        </form>
-      </div>
-
-      <div class="card" id="events-list-card">
-        <div class="row between center wrap">
-          <h3>Events</h3>
-          <button class="btn ghost" id="export-events">Events exportieren (CSV)</button>
-        </div>
-        <div class="table-wrap">
-          <table id="events-table" aria-label="Events Tabelle">
-            <thead>
-              <tr>
-                <th scope="col">Datum</th>
-                <th scope="col">Name</th>
-                <th scope="col">Ort</th>
-                <th scope="col">Typ</th>
-                <th scope="col"></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SPONSORS -->
-  <section id="view-sponsors" class="view" aria-labelledby="sponsors-title">
-    <div class="grid-2">
-      <div class="card" id="sponsor-form-card">
-        <h3 id="sponsors-title">Sponsor erfassen</h3>
-        <form id="sponsor-form" class="form-grid" aria-label="Sponsor erfassen">
-          <input type="text" id="sp-name" placeholder="Sponsorname" required aria-label="Sponsor-Name" />
-          <input type="url" id="sp-url" placeholder="https://…" aria-label="Sponsor-URL" />
-          <button type="submit" class="btn">Speichern</button>
-        </form>
-      </div>
-
-      <div class="card" id="sponsor-list-card">
-        <div class="row between center wrap">
-          <h3>Aktive Sponsoren</h3>
-          <button class="btn ghost" id="export-sponsors">Sponsoren exportieren (CSV)</button>
-        </div>
-        <ul id="sponsor-list" class="list" aria-label="Sponsorenliste"></ul>
-      </div>
-    </div>
-  </section>
-</main>
-
-<dialog id="player-modal" class="sheet" aria-labelledby="player-modal-title">
-  <form id="player-form" class="modal-form" aria-label="Spieler anlegen">
-    <header class="modal-head">
-      <h3 id="player-modal-title">Neuer Spieler</h3>
-      <button type="button" class="icon-btn close" aria-label="Schließen"
-              onclick="this.closest('dialog').close()">✕</button>
-    </header>
-
-    <div class="form-field">
-      <label for="p-name">Name</label>
-      <input id="p-name" type="text" placeholder="z. B. Dario Schweizer" required />
-    </div>
-    <div class="form-field">
-      <label for="p-decks">Decks (kommagetrennt)</label>
-      <input id="p-decks" type="text" placeholder="z. B. Gardevoir, Dragapult" />
-    </div>
-
-    <footer class="modal-actions">
-      <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Abbrechen</button>
-      <button class="btn" type="submit">Speichern</button>
-    </footer>
-  </form>
-</dialog>
-
-<footer class="footer">
-  <div class="container row between center wrap" style="padding:16px 0;">
-    <div class="muted">© TEAM MANIACS · TCG</div>
-    <div class="social-buttons row" style="gap:12px">
-      <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" aria-label="Instagram">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="md:ml-64 px-5 py-5 border-t border-white/5 flex items-center justify-between flex-wrap gap-4">
+    <p class="text-xs text-slate-500 font-label">© TEAM MANIACS · TCG</p>
+    <div class="flex gap-3">
+      <a class="social-btn" href="https://www.instagram.com/maniacs_tcg/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zm4.25 4A4.75 4.75 0 1 1 7.25 12a4.75 4.75 0 0 1 4.75-4.75zm0 1.5A3.25 3.25 0 1 0 15.25 12a3.25 3.25 0 0 0-3.25-3.25zm5.5-.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
         </svg>
       </a>
-
-      <a class="social-btn" href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" aria-label="Discord">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <a class="social-btn" href="https://mee6.xyz/i/8ldFNhRQch" target="_blank" rel="noopener" aria-label="Discord">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M19.54 4.47A17.3 17.3 0 0 0 15.86 3a12.36 12.36 0 0 0-.61 1.26 16.43 16.43 0 0 0-4.5 0A12.94 12.94 0 0 0 10.14 3 17.29 17.29 0 0 0 6.46 4.47C3.75 8.37 3.05 12.18 3.28 15.94a17.55 17.55 0 0 0 5.3 2.73A12.79 12.79 0 0 0 9.74 17a10.9 10.9 0 0 1-1.7-.83 3.86 3.86 0 0 0 .62-.48 7.91 7.91 0 0 0 7.68 0 4.4 4.4 0 0 0 .63.48 11.05 11.05 0 0 1-1.72.83 12.77 12.77 0 0 0 1.17 1.68 17.61 17.61 0 0 0 5.31-2.73c.37-5.18-.65-8.95-2.19-11.74zM9.5 14.5c-.9 0-1.63-.83-1.63-1.84S8.6 10.8 9.5 10.8s1.64.83 1.63 1.84S10.4 14.5 9.5 14.5zm5 0c-.9 0-1.63-.83-1.63-1.84s.73-1.84 1.63-1.84 1.63.83 1.63 1.84S15.4 14.5 14.5 14.5z"/>
         </svg>
       </a>
     </div>
-  </div>
-</footer>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE FIXES  (kein Eingriff in app.js)
+  ═══════════════════════════════════════════ -->
+  <script>
+  (function () {
+    'use strict';
+
+    // ── 1. Mobile Login Proxy ──────────────────────────────────────────
+    // Das echte #login-form sitzt in der Sidebar (nur Desktop sichtbar).
+    // Das Proxy-Formular auf Mobile leitet den Submit weiter.
+    const realForm  = document.getElementById('login-form');
+    const realEmail = document.getElementById('login-email');
+    const realPass  = document.getElementById('login-pass');
+    const realLogout = document.getElementById('btn-logout');
+
+    const proxyForm   = document.querySelector('.mobile-login-proxy');
+    const proxyLogout = document.querySelector('.mobile-logout-proxy');
+
+    if (proxyForm && realForm) {
+      const pEmail = proxyForm.querySelector('input[type="email"]');
+      const pPass  = proxyForm.querySelector('input[type="password"]');
+
+      proxyForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (realEmail && pEmail) realEmail.value = pEmail.value;
+        if (realPass  && pPass)  realPass.value  = pPass.value;
+        realForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        if (pPass) pPass.value = '';
+      });
+    }
+
+    if (proxyLogout && realLogout) {
+      proxyLogout.addEventListener('click', function () { realLogout.click(); });
+    }
+
+    // ── 2. Mobile Login Card: Visibility syncen ────────────────────────
+    // app.js toggled .hidden auf #login-form und #btn-logout.
+    // Wir spiegeln den Zustand auf die mobile Card.
+    const mobileLoginCard = document.querySelector('.mobile-login-card');
+
+    function syncMobileCard() {
+      if (!mobileLoginCard) return;
+      const loggedIn = realForm && realForm.classList.contains('hidden');
+      mobileLoginCard.classList.toggle('hidden', loggedIn);
+      if (proxyLogout) proxyLogout.classList.toggle('hidden', !loggedIn);
+    }
+
+    if (realForm && mobileLoginCard) {
+      new MutationObserver(syncMobileCard)
+        .observe(realForm, { attributes: true, attributeFilter: ['class'] });
+      syncMobileCard();
+    }
+
+    // ── 3. User-Info & Role-Badge: Mobile Header sync ──────────────────
+    const userInfo       = document.getElementById('user-info');
+    const userInfoMobile = document.getElementById('user-info-mobile');
+    const roleBadge       = document.getElementById('role-badge');
+    const roleBadgeMobile = document.getElementById('role-badge-mobile');
+
+    if (userInfo && userInfoMobile) {
+      function syncUserInfo() {
+        userInfoMobile.textContent = userInfo.textContent;
+      }
+      new MutationObserver(syncUserInfo)
+        .observe(userInfo, { childList: true, characterData: true, subtree: true });
+      syncUserInfo();
+    }
+
+    if (roleBadge && roleBadgeMobile) {
+      function syncRoleBadge() {
+        roleBadgeMobile.classList.toggle('hidden', roleBadge.classList.contains('hidden'));
+      }
+      new MutationObserver(syncRoleBadge)
+        .observe(roleBadge, { attributes: true, attributeFilter: ['class'] });
+      syncRoleBadge();
+    }
+
+  })();
+  </script>
+
 </body>
 </html>
