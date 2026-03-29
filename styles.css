@@ -18,8 +18,8 @@
 .view { display: none; }
 .view.active { display: block; }
 
-/* ── Global hidden util ──────────────────────── */
-.hidden { display: none !important; }
+/* ── Global hidden util (kein !important — sonst überschreibt es Tailwind md:flex) */
+.hidden { display: none; }
 
 /* ── Sidebar active tab (set by JS via .active) ─ */
 .tab.active {
@@ -37,8 +37,8 @@ nav .tab.active {
 }
 
 /* ── Admin visibility ────────────────────────── */
-.admin-only { display: none !important; }
-.is-admin .admin-only { display: flex !important; }
+.admin-only { display: none; }
+.is-admin .admin-only { display: flex; }
 
 /* ── Role badge ──────────────────────────────── */
 .role-badge {
