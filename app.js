@@ -203,6 +203,20 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
   // Cache der Players
   let lastPlayers = [];
 
+  function initials(name) {
+    return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  }
+  function deckChip(deck) {
+    if (!deck || deck === '—') return '<span class="text-[#9aa3b2]">—</span>';
+    return `<span class="px-2.5 py-0.5 rounded-full bg-[#0b4e6e]/30 border border-[#98cdf2]/20 text-[#98cdf2] text-[10px] font-bold uppercase tracking-wide font-label">${deck}</span>`;
+  }
+  function resBadge(res) {
+    const cls = res==='W' ? 'bg-green-500/10 text-green-400 border-green-500/20'
+              : res==='L' ? 'bg-red-500/10 text-red-400 border-red-500/20'
+              : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    return `<div class="inline-flex items-center justify-center w-8 h-8 rounded-lg ${cls} font-black text-xs border">${res||'?'}</div>`;
+  }
+
   function renderPlayersTable() {
     if (!playersTBody) return;
     const rows = [];
@@ -211,12 +225,26 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
       const pct = g ? Math.round((p.wins||0) / g * 100) : 0;
       const lw = latestWinDeckByPlayer[p.id];
       const lastWinDeck = lw?.deck ? lw.deck : '—';
+      const barColor = pct>=55 ? 'bg-green-400' : pct>=45 ? 'bg-yellow-400' : 'bg-red-400';
+      const pctColor = pct>=55 ? 'text-green-400' : pct>=45 ? 'text-yellow-400' : 'text-red-400';
       rows.push(
         `<tr>
-          <td>${p.name}</td>
+          <td>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#0b4e6e]/40 text-[#98cdf2] flex items-center justify-center text-[10px] font-black shrink-0">${initials(p.name)}</div>
+              <span>${p.name}</span>
+            </div>
+          </td>
           <td>${p.wins||0}-${p.losses||0}-${p.draws||0}</td>
-          <td><span class="pill ${pct>=55?'ok':pct>=45?'warn':'bad'}">${pct}%</span></td>
-          <td>${lastWinDeck}</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <span class="${pctColor} font-bold text-sm">${pct}%</span>
+              <div class="w-16 h-1.5 bg-[#262a30] rounded-full overflow-hidden">
+                <div class="h-full ${barColor} rounded-full" style="width:${pct}%"></div>
+              </div>
+            </div>
+          </td>
+          <td>${deckChip(lastWinDeck)}</td>
           <td><button class="btn ghost admin-only" data-del-p="${p.id}">Löschen</button></td>
         </tr>`
       );
@@ -335,17 +363,32 @@ $('#player-form')?.addEventListener('submit', async (e)=>{
       // Matches-Tabelle
       rows.push(`
         <tr>
-          <td>${m.date||''}</td>
-          <td>${m.player||''}</td>
-          <td>${m.deck||''}</td>
-          <td>${m.opp||''}</td>
-          <td>${m.res||''}</td>
-          <td>${(tierToText(m.tier)||'')}${m.event ? ` <span class="muted">– ${m.event}</span>` : ''}</td>
+          <td class="text-[#9aa3b2] text-xs">${m.date||''}</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full bg-[#0b4e6e]/40 text-[#98cdf2] flex items-center justify-center text-[9px] font-black shrink-0">${initials(m.player)}</div>
+              <span>${m.player||''}</span>
+            </div>
+          </td>
+          <td>${deckChip(m.deck||'—')}</td>
+          <td class="text-[#9aa3b2]">${m.opp||''}</td>
+          <td class="text-center">${resBadge(m.res)}</td>
+          <td class="text-[#9aa3b2] text-xs">${tierToText(m.tier)||''}${m.event ? ` – ${m.event}` : ''}</td>
           <td><button class="btn ghost admin-only" data-del-match="${d.id}" data-player-id="${m.playerId||''}">Löschen</button></td>
         </tr>
       `);
 
-      if(latest.length<6) latest.push(`<tr><td>${m.player}</td><td>${m.deck}</td><td>${m.opp}</td><td>${m.res}</td></tr>`);
+      if(latest.length<6) latest.push(`<tr>
+        <td>
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-[#0b4e6e]/40 text-[#98cdf2] flex items-center justify-center text-[10px] font-black shrink-0">${initials(m.player)}</div>
+            <span>${m.player||''}</span>
+          </div>
+        </td>
+        <td>${deckChip(m.deck||'—')}</td>
+        <td class="text-[#9aa3b2]">${m.opp||''}</td>
+        <td class="text-center">${resBadge(m.res)}</td>
+      </tr>`);
 
       // Team W/L/D + Top-Deck-Zähler
       if (m.res === 'W') {
